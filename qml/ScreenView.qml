@@ -13,7 +13,7 @@ Rectangle {
 
     ListModel {
         id: viewListModel
-        ListElement { type: "inputText"; content: "> " }
+        ListElement { type: "inputText"; content: "" }
     }
 
     ListView {
@@ -49,7 +49,7 @@ Rectangle {
                         // displayResult(QString result) -- syntactically here
                         viewListModel.remove(index);
                         viewListModel.append({"type": "outputText", "content": result});
-                        viewListModel.append({"type": "inputText", "content": "> "});
+                        viewListModel.append({"type": "inputText", "content": ""});
 
                         viewListView.positionViewAtEnd();
                     }
