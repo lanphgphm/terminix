@@ -18,6 +18,7 @@ public:
 
     void setPtty(Ptty* ptty);
     QString ansiToHtml(const QString ansiText);
+    QString ansiToPlainText(const QString ansiText);
 
 signals:
     void resultReadySendToView(QString result);

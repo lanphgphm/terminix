@@ -12,9 +12,22 @@ ApplicationWindow {
     visible: true
     visibility: Window.Windowed
 
-    ScreenView {
+    menuBar: TopMenuBar {}
+
+    // ScreenView {
+    //     anchors.fill: parent
+    //     Layout.fillWidth: true
+    //     Layout.fillHeight: true
+    // }
+
+    SplitScreenView {
+        id: rootSplitScreen
+
         anchors.fill: parent
-        Layout.fillWidth: true
-        Layout.fillHeight: true
+    }
+
+    ShortcutsCollection {
+        appId: app
+        rootScreenId: rootSplitScreen
     }
 }

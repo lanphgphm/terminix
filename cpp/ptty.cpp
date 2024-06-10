@@ -86,6 +86,14 @@ bool Ptty::spawnChildProcess(){
     dup2(m_slaveFd, STDERR_FILENO);
 
     // spawning bash session
+    // set simplified prompt sequence
+    // execl("/bin/bash",
+    //       "/bin/bash",
+    //       "-c",
+    //       "export PS1='\\u@\\h\\$ '; exec /bin/bash -i",
+    //       (char*) NULL);
+
+    // baseline containing ansi escape as plaintext
     execl("/bin/bash", "/bin/bash", (char*) NULL);
 
     // if got to here --> fail to exec bash

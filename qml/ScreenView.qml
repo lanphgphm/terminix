@@ -20,7 +20,7 @@ Rectangle {
     Connections {
         target: screenController
         function onResultReadySendToView(result) {
-            // displayResult(QString result) -- syntactically here
+            // virtual function: displayResult(QString result)
             let newContent = listModel.get(0).content + "\n" + result; // \n will disrupt data longer than BUFFERSIZE in pty
             console.log(newContent);
             listModel.setProperty(0, "content", newContent);
@@ -58,7 +58,10 @@ Rectangle {
                 color: "white"
 
                 wrapMode: TextEdit.Wrap
+                // only use this when ScreenController::ansiToHtml() works :)
                 // textFormat: TextEdit.RichText
+                // using PlainText by default
+                textFormat: TextEdit.PlainText
                 text: model.content
             }
 
@@ -79,9 +82,8 @@ Rectangle {
                 text: model.content
 
                 onAccepted: {
-                    // commandEntered(QString command) -- syntactically here
+                    // virtual function: commandEntered(QString command)
                     screenController.commandReceivedFromView(inputArea.text);
-                    inputArea.forceActiveFocus();
                 }
 
                 Component.onCompleted: {
