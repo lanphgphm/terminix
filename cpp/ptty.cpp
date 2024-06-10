@@ -4,6 +4,8 @@
 
 Ptty::Ptty(QObject* parent)
     : QObject(parent)
+    , m_stop(false)
+    , m_readThread(nullptr)
 {
     // constructor
     setupPty();
@@ -11,6 +13,7 @@ Ptty::Ptty(QObject* parent)
 
 Ptty::~Ptty(){
     // destructor
+    stop();
     ::close(m_masterFd);
     ::close(m_slaveFd);
     // maybe print something to ensure that all are done b4 actually shutting down
@@ -56,12 +59,12 @@ bool Ptty::pairMasterSlaveFd(){
 }
 
 bool Ptty::spawnChildProcess(){
-    char* EV[] = {
-        "TERM=xterm-color", "COLORTERM=xterm",
-        "COLORFGBG=15;0", "LINES", "COLUMNS", "TERMCAP"
-    };
+    // char EV[][255] = {
+    //     "TERM=xterm-color", "COLORTERM=xterm",
+    //     "COLORFGBG=15;0", "LINES", "COLUMNS", "TERMCAP"
+    // };
 
-    int N_EV = sizeof(EV) / sizeof(EV[0]);
+    // int N_EV = sizeof(EV) / sizeof(EV[0]);
 
     m_pid = fork();
     if (m_pid < 0) {
@@ -109,14 +112,27 @@ bool Ptty::setupPty(){
 
 void Ptty::executeCommand(QString command){
     if (m_masterFd != -1){
-        QByteArray cmd = command.toLocal8Bit() + "\n";
-        ::write(m_masterFd, cmd.data(), cmd.size());
-        char result[1024];
-        ssize_t count = ::read(m_masterFd, result, 1024-1);
+        std::lock_guard<std::mutex> lock(m_writeMutex); // dont need manual unlock
+        tcflush(m_masterFd, TCIOFLUSH);
+        QByteArray cmd = command.toUtf8() + "\n";
+        ssize_t written = ::write(m_masterFd, cmd.data(), cmd.size());
 
+        if (written < 0) {
+            perror("write(masterFd)");
+        } else if (written < cmd.size()) {
+            // In case the entire command could not be written at once
+            qDebug("Warning: Not all bytes were written to the terminal.");
+        }
+    }
+    // mutex lock auto release when out of scope
+}
+
+void Ptty::readLoop(){
+    while(!m_stop){
+        ssize_t count = ::read(m_masterFd, resultBuffer, BUFFER_SIZE-1);
         if (count > 0) { // something was read from buffer
-            result[count] = '\0'; // character not string
-            emit resultReceivedFromBash(QString::fromLocal8Bit(result));
+            resultBuffer[count] = '\0'; // character not string :)
+            emit resultReceivedFromBash(QString::fromUtf8(resultBuffer));
         }
         else if (count < 0) {
             perror("read");
@@ -124,5 +140,22 @@ void Ptty::executeCommand(QString command){
         else{
             perror("buffer empty");
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+void Ptty::start(){
+    m_stop = false;
+    m_readThread = new std::thread(&Ptty::readLoop, this);
+    m_readThread->detach();
+}
+
+void Ptty::stop(){
+    m_stop = true;
+    if (m_readThread && m_readThread->joinable()){
+        m_readThread->join();
+        delete m_readThread;
+        m_readThread = nullptr;
     }
 }

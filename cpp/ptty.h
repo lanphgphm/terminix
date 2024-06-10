@@ -24,6 +24,8 @@
 #include <termios.h> // posix terminal control
 #include <fcntl.h> // posix_openpt, open
 #include <stdio.h> // perror
+#include <thread>
+#include <mutex>
 
 #include <QObject>
 
@@ -34,6 +36,9 @@ class Ptty : public QObject
 public:
     explicit Ptty(QObject* parent = nullptr);
     virtual ~Ptty();
+
+    void start();
+    void stop();
 
 signals:
     void resultReceivedFromBash(QString result);
@@ -46,7 +51,13 @@ private:
     pid_t m_pid;
     int m_masterFd;
     int m_slaveFd;
+    bool m_stop;
+    std::thread *m_readThread;
+    std::mutex m_writeMutex;
+    static const int BUFFER_SIZE = 4096;
+    char resultBuffer[BUFFER_SIZE];
 
+    void readLoop();
     bool setupPty();
     bool pairMasterSlaveFd();
     bool spawnChildProcess();

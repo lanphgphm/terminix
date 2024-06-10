@@ -12,17 +12,32 @@ Rectangle {
     Layout.fillHeight: true
 
     ListModel {
-        id: viewListModel
+        id: listModel
+        ListElement { type: "outputText"; content: "Terminal initialized..." }
         ListElement { type: "inputText"; content: "" }
     }
 
+    Connections {
+        target: screenController
+        function onResultReadySendToView(result) {
+            // displayResult(QString result) -- syntactically here
+            let newContent = listModel.get(0).content + "\n" + result; // \n will disrupt data longer than BUFFERSIZE in pty
+            console.log(newContent);
+            listModel.setProperty(0, "content", newContent);
+
+            listView.positionViewAtEnd(); // not scrolling down
+            listView.forceLayout(); // also not scrolling down
+        }
+    }
+
     ListView {
-        id: viewListView
-        model: viewListModel
+        id: listView
+        model: listModel
 
         anchors.fill: parent
         width: parent ? parent.width : 0
         height: parent.height
+
 
         delegate: Item {
             width: parent? parent.width : 0
@@ -30,6 +45,8 @@ Rectangle {
 
             TextEdit {
                 id: outputArea
+
+                property bool isConnected: false
 
                 readOnly: true
                 visible: model.type === "outputText"
@@ -42,22 +59,6 @@ Rectangle {
 
                 wrapMode: TextEdit.Wrap
                 text: model.content
-
-                Connections {
-                    target: screenController
-                    function onResultReadySendToView(result) {
-                        // displayResult(QString result) -- syntactically here
-                        viewListModel.remove(index);
-                        viewListModel.append({"type": "outputText", "content": result});
-                        viewListModel.append({"type": "inputText", "content": ""});
-
-                        viewListView.positionViewAtEnd();
-                    }
-                }
-
-                Component.onCompleted: {
-                    if (visible) forceActiveFocus();
-                }
             }
 
             TextInput {
@@ -78,36 +79,19 @@ Rectangle {
 
                 onAccepted: {
                     // commandEntered(QString command) -- syntactically here
-                    screenController.commandReceivedFromView(text);
+                    screenController.commandReceivedFromView(inputArea.text);
+                    inputArea.forceActiveFocus();
+                    // listView.positionViewAtEnd();
+                }
+
+                Component.onCompleted: {
+                    // only focus if scrolled down
+                    // --> trigger scrolling down first then force active focus
+                    // listView.positionViewAtEnd(); // NOT SCROLLING DOWN
+                    inputArea.forceActiveFocus();
                 }
             }
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

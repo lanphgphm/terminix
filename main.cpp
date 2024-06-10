@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 
     ScreenController screenController;
     Ptty ptty;
+    ptty.start();
     screenController.setPtty(&ptty);
 
     // controller forward data direction
