@@ -1,13 +1,16 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.5
+import com.terminix 1.0
 
 Rectangle {
     id: screenView
 
+    // 1 controller instance per 1 view instance
+    property ScreenController screenController: ScreenController{}
+
     color: "black"
     visible: true
-
     Layout.fillWidth: true
     Layout.fillHeight: true
 
@@ -22,11 +25,11 @@ Rectangle {
         function onResultReadySendToView(result) {
             // virtual function: displayResult(QString result)
             let newContent = listModel.get(0).content + "\n" + result; // \n will disrupt data longer than BUFFERSIZE in pty
-            console.log(newContent);
+            console.log(newContent); // DEBUG
             listModel.setProperty(0, "content", newContent);
 
-            listView.positionViewAtEnd(); // not scrolling down
-            listView.forceLayout(); // also not scrolling down
+            listView.positionViewAtEnd(); // autoscroll down
+            // listView.forceLayout();
         }
     }
 

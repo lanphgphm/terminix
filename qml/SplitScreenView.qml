@@ -100,5 +100,4 @@ SplitView{
             newScreen.forceActiveFocus();
         }
     }
-
 }

@@ -12,13 +12,7 @@ ApplicationWindow {
     visible: true
     visibility: Window.Windowed
 
-    menuBar: TopMenuBar {}
-
-    // ScreenView {
-    //     anchors.fill: parent
-    //     Layout.fillWidth: true
-    //     Layout.fillHeight: true
-    // }
+    // menuBar: TopMenuBar {} // irrelevant component
 
     SplitScreenView {
         id: rootSplitScreen
@@ -29,5 +23,8 @@ ApplicationWindow {
     ShortcutsCollection {
         appId: app
         rootScreenId: rootSplitScreen
+
+        // contains Ctrl+Shift+E for vertical splitting
+        // contains Ctrl+Shift+O for horizontal splitting
     }
 }

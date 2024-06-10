@@ -3,7 +3,7 @@ import QtQuick.Controls 2.5
 
 Item {
     id: root
-    height: 25
+    height: 30
     width: 600
     visible: true
 

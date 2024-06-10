@@ -4,18 +4,28 @@
 #include <QMap>
 
 ScreenController::ScreenController(QObject* parent)
-    : QObject(parent)
+    : QObject(parent), m_ptty(new Ptty(this))
 {
     // constructor
+    m_ptty->start();
+
+    QObject::connect(m_ptty,
+                     &Ptty::resultReceivedFromBash,
+                     this,
+                     &ScreenController::resultReceivedFromPty);
+    QObject::connect(this,
+                     &ScreenController::commandReadySendToPty,
+                     m_ptty,
+                     &Ptty::executeCommand);
 }
 
 ScreenController::~ScreenController() {
     // destructor
 }
 
-void ScreenController::setPtty(Ptty* ptty){
-    m_ptty = ptty;
-}
+// void ScreenController::setPtty(Ptty* ptty){
+//     m_ptty = ptty;
+// }
 
 void ScreenController::commandReceivedFromView(QString command){
     emit commandReadySendToPty(command);

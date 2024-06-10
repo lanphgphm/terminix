@@ -1,6 +1,8 @@
 #ifndef SCREENCONTROLLER_H
 #define SCREENCONTROLLER_H
 
+#include "cpp/ptty.h"
+
 #include <QObject>
 #include <QProcess>
 #include <QFont>
@@ -16,7 +18,7 @@ public:
     explicit ScreenController(QObject* parent = nullptr);
     virtual ~ScreenController();
 
-    void setPtty(Ptty* ptty);
+    // void setPtty(Ptty* ptty);
     QString ansiToHtml(const QString ansiText);
     QString ansiToPlainText(const QString ansiText);
 

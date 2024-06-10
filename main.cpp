@@ -7,23 +7,24 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
+    qmlRegisterType<ScreenController>("com.terminix", 1, 0, "ScreenController");
     QQmlApplicationEngine engine;
 
     ScreenController screenController;
-    Ptty ptty;
-    ptty.start();
-    screenController.setPtty(&ptty);
+    // Ptty ptty;
+    // ptty.start();
+    // screenController.setPtty(&ptty);
 
-    // controller forward data direction
-    QObject::connect(&screenController,
-                     &ScreenController::commandReadySendToPty,
-                     &ptty,
-                     &Ptty::executeCommand);
-    // controller backward data direction
-    QObject::connect(&ptty,
-                     &Ptty::resultReceivedFromBash,
-                     &screenController,
-                     &ScreenController::resultReceivedFromPty);
+    // // controller forward data direction
+    // QObject::connect(&screenController,
+    //                  &ScreenController::commandReadySendToPty,
+    //                  &ptty,
+    //                  &Ptty::executeCommand);
+    // // controller backward data direction
+    // QObject::connect(&ptty,
+    //                  &Ptty::resultReceivedFromBash,
+    //                  &screenController,
+    //                  &ScreenController::resultReceivedFromPty);
 
     engine.rootContext()->setContextProperty("screenController", &screenController);
 
