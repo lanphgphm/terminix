@@ -120,7 +120,7 @@ void Ptty::executeCommand(QString command){
         if (written < 0) {
             perror("write(masterFd)");
         } else if (written < cmd.size()) {
-            // In case the entire command could not be written at once
+            // in case the entire command cant be written at once
             qDebug("Warning: Not all bytes were written to the terminal.");
         }
     }

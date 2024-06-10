@@ -1,5 +1,7 @@
 #include "screencontroller.h"
 #include <QtGlobal> // qDebug
+#include <QRegularExpression>
+#include <QMap>
 
 ScreenController::ScreenController(QObject* parent)
     : QObject(parent)
@@ -20,5 +22,18 @@ void ScreenController::commandReceivedFromView(QString command){
 }
 
 void ScreenController::resultReceivedFromPty(QString result){
-    emit resultReadySendToView(result);
+    // QString htmlResult = ansiToHtml(result);
+    // emit resultReadySendToView(htmlResult);
+
+    emit resultReadySendToView(result); // baseline ugly
+}
+
+QString ScreenController::ansiToHtml(const QString ansiText){
+    QString htmlText = ansiText;
+
+    //------------------------------------------------
+    // do convert
+    //------------------------------------------------
+
+    return htmlText;
 }

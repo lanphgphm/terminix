@@ -58,6 +58,7 @@ Rectangle {
                 color: "white"
 
                 wrapMode: TextEdit.Wrap
+                // textFormat: TextEdit.RichText
                 text: model.content
             }
 
@@ -81,13 +82,9 @@ Rectangle {
                     // commandEntered(QString command) -- syntactically here
                     screenController.commandReceivedFromView(inputArea.text);
                     inputArea.forceActiveFocus();
-                    // listView.positionViewAtEnd();
                 }
 
                 Component.onCompleted: {
-                    // only focus if scrolled down
-                    // --> trigger scrolling down first then force active focus
-                    // listView.positionViewAtEnd(); // NOT SCROLLING DOWN
                     inputArea.forceActiveFocus();
                 }
             }
