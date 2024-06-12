@@ -1,7 +1,6 @@
 #include "screencontroller.h"
 #include <QtGlobal> // qDebug
-#include <QRegularExpression>
-#include <QMap>
+#include <QtDebug> // qDebug overload
 
 ScreenController::ScreenController(QObject* parent)
     : QObject(parent), m_ptty(new Ptty(this))
@@ -28,24 +27,21 @@ void ScreenController::commandReceivedFromView(QString command){
 }
 
 void ScreenController::resultReceivedFromPty(QString result){
-    QString htmlResult = ansiToHtml(result);
-    emit resultReadySendToView(htmlResult);
+    if (result.contains("Process has exited")){
+        // handle terminal closure by informing QML
+        qDebug("Terminal session has ended\n");
+        emit resultReadySendToView("Terminal session has ended\n"); // saying goodbye to user
+        emit terminalSessionEnded();
+    }
+    else{
+        QString htmlResult = ansiToHtml(result);
+        emit resultReadySendToView(htmlResult);
+    }
 }
 
 QString ScreenController::ansiToHtml(const QString& ansiText){
     // Devil's formatting language: https://en.wikipedia.org/wiki/ANSI_escape_code
     QString htmlText = "<pre>"; // preserve whitespace
-    QMap<int, QString> colorMap = {
-        {30, "black"},
-        {31, "red"},
-        {32, "green"},
-        {33, "yellow"},
-        {34, "blue"},
-        {35, "magenta"},
-        {36, "cyan"},
-        {37, "white"}
-    };
-
     static QRegularExpression pattern("\\x1b\\[([0-9;]+)m");
     QRegularExpressionMatchIterator i = pattern.globalMatch(ansiText);
     int lastPosition = 0;
@@ -96,4 +92,12 @@ QString ScreenController::ansiToHtml(const QString& ansiText){
     htmlText.replace("</pre><pre>", "");
 
     return htmlText;
+}
+
+void ScreenController::handleControlKeyPress(Qt::Key key){
+    qDebug("You just pressed Ctrl key\n");
+    if (keySignalMap.contains(key)) {
+        int signal = keySignalMap[key];
+        m_ptty->sendSignal(signal);
+    }
 }

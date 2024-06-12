@@ -17,15 +17,11 @@
 #include <sys/wait.h> // wait
 #include <stdlib.h> // exit, calloc
 #include <string.h> // strcmp
-#include <sys/ioctl.h> // ioctl
-// #include <sys/select.h> // select
-// #include <sys/stat.h> // system types
-#include <sys/types.h> // system types
-#include <termios.h> // posix terminal control
+#include <sys/types.h> // pid_t
 #include <fcntl.h> // posix_openpt, open
-#include <stdio.h> // perror
 #include <thread>
 #include <mutex>
+#include <signal.h>
 
 #include <QObject>
 
@@ -39,6 +35,7 @@ public:
 
     void start();
     void stop();
+    void sendSignal(int signal);
 
 signals:
     void resultReceivedFromBash(QString result);
@@ -47,7 +44,7 @@ public slots:
     void executeCommand(QString command);
 
 private:
-    pid_t m_pid;
+    pid_t m_pid; // pid for bash session
     int m_masterFd;
     int m_slaveFd;
     bool m_stop;

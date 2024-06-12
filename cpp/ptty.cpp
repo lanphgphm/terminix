@@ -1,6 +1,7 @@
 #include "ptty.h"
 
 #include <QtGlobal> // qDebug
+#include <QtDebug> // qDebug overload
 
 Ptty::Ptty(QObject* parent)
     : QObject(parent)
@@ -58,44 +59,6 @@ bool Ptty::pairMasterSlaveFd(){
     return true;
 }
 
-bool Ptty::spawnChildProcess(){
-    m_pid = fork();
-    if (m_pid < 0) {
-        perror("fork");
-        return false;
-    }
-    else if (m_pid > 0){
-        // parent process, only need masterFd
-        ::close(m_slaveFd);
-        return true;
-    }
-
-    // child process, only need slaveFd
-    setsid();
-    ::close(m_masterFd);
-
-    // set slave side of pty as stdin, stdout, stderr
-    dup2(m_slaveFd, STDIN_FILENO);
-    dup2(m_slaveFd, STDOUT_FILENO);
-    dup2(m_slaveFd, STDERR_FILENO);
-
-    // spawning bash session
-    // set simplified prompt sequence
-    execl("/bin/bash",
-          "/bin/bash",
-          "-c",
-          "export PS1='\\u@\\h\\$ '; exec /bin/bash -i",
-          (char*) NULL);
-
-    // baseline containing ansi escape as plaintext
-    // execl("/bin/bash", "/bin/bash", (char*) NULL);
-
-    // if got to here --> fail to exec bash
-    perror("execl(bash)");
-    exit(EXIT_FAILURE);
-    return false;
-}
-
 bool Ptty::setupPty(){
     bool pairStatus = pairMasterSlaveFd();
     bool spawnStatus = spawnChildProcess();
@@ -137,13 +100,19 @@ void Ptty::readLoop(){
             emit resultReceivedFromBash(resultBuffer);
         }
         else if (count < 0) {
+            // IO error occured ~ unhandled "exit"
+            // go inform ScreenController::resultReceivedFromPty() now!
             perror("read");
+            break;
         }
         else{
-            perror("buffer empty");
+            // count == 0 means child process has closed PTY for some reasons
+            perror("PTY closed by child process");
+            break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+    emit resultReceivedFromBash("Process has exited\n");
 }
 
 void Ptty::start(){
@@ -160,3 +129,79 @@ void Ptty::stop(){
         m_readThread = nullptr;
     }
 }
+
+bool Ptty::spawnChildProcess(){
+    m_pid = fork();
+    if (m_pid < 0) {
+        perror("fork");
+        return false;
+    }
+    else if (m_pid > 0){
+        // parent process, only need masterFd
+        ::close(m_slaveFd);
+
+        // Set the child process as the foreground process group
+        // if (tcsetpgrp(m_masterFd, m_pid) == -1) {
+        //     perror("tcsetpgrp");
+        //     return false;
+        // }
+
+        return true;
+    }
+
+    // setting child process as session leader
+    setsid();
+
+    // child process, only need slaveFd
+    ::close(m_masterFd);
+
+    // set slave side of pty as stdin, stdout, stderr
+    dup2(m_slaveFd, STDIN_FILENO);
+    dup2(m_slaveFd, STDOUT_FILENO);
+    dup2(m_slaveFd, STDERR_FILENO);
+
+    // ensure that the child process is set as ITS OWN process group
+    // setpgid AFTER setsid() is called
+    // if (setpgid(0, 0) == -1) {
+    //     perror("setpgid");
+    //     exit(EXIT_FAILURE);
+    // }
+
+    // spawning bash session
+    execl("/bin/bash", "/bin/bash", (char*) NULL);
+
+    // if got to here --> fail to exec bash
+    perror("execl(bash)");
+    exit(EXIT_FAILURE);
+    return false;
+}
+
+void Ptty::sendSignal(int signal){
+    if (m_masterFd <= 0){
+        perror("Invalid master file descriptor, cannot send signal");
+        return;
+    }
+
+    // // Get the foreground process group ID of the terminal
+    // pid_t fg_pgid = tcgetpgrp(m_masterFd);
+    // if (fg_pgid == -1) {
+    //     perror("tcgetpgrp");
+    //     return;
+    // }
+    // qDebug() << "Sending signal" << signal << "to process group" << fg_pgid;
+
+    // // note: some forum discussions said to not use kill()
+    // // i have yet to understand why, the manpage for kill()
+    // // specifies usage similar how I am using it in this function
+    // int sendSignalResult = kill(-fg_pgid, signal);
+
+    int sendSignalResult = -1; // tmp :)
+
+    if (sendSignalResult == -1){
+        perror("Failed to send signal");
+    }
+    else {
+        qDebug("Signal sent successfully.");
+    }
+}
+

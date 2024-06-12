@@ -31,6 +31,10 @@ Rectangle {
             if (!listView.userScrolled)
                 listView.positionViewAtEnd(); // autoscroll down
         }
+
+        function onTerminalSessionEnded() {
+            Qt.quit();
+        }
     }
 
     ListView {
@@ -93,10 +97,38 @@ Rectangle {
                 wrapMode: TextInput.Wrap
                 text: model.content
 
-                onAccepted: {
-                    // virtual function: commandEntered(QString command)
-                    screenController.commandReceivedFromView(inputArea.text);
-                    inputArea.text = "";
+                // onAccepted: {
+                //     // virtual function: commandEntered(QString command)
+                //     screenController.commandReceivedFromView(inputArea.text);
+                //     inputArea.text = "";
+                // }
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
+                        screenController.handleControlKeyPress(Qt.Key_C);
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_Z && (event.modifiers & Qt.ControlModifier)) {
+                        screenController.handleControlKeyPress(Qt.Key_Z);
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_Backslash && (event.modifiers & Qt.ControlModifier)) {
+                        screenController.handleControlKeyPress(Qt.Key_Backslash);
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) {
+                        screenController.handleControlKeyPress(Qt.Key_S);
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_Q && (event.modifiers & Qt.ControlModifier)) {
+                        screenController.handleControlKeyPress(Qt.Key_Q);
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        screenController.commandReceivedFromView(text);
+                        text = "";
+                        event.accepted = true;
+                    }
                 }
             }
         }
