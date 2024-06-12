@@ -19,8 +19,7 @@ public:
     virtual ~ScreenController();
 
     // void setPtty(Ptty* ptty);
-    QString ansiToHtml(const QString ansiText);
-    QString ansiToPlainText(const QString ansiText);
+    QString ansiToHtml(const QString& ansiText);
 
 signals:
     void resultReadySendToView(QString result);
@@ -31,7 +30,6 @@ public slots:
     void resultReceivedFromPty(QString result);
 
 private:
-    int sanity = 1;
     Ptty* m_ptty;
 };
 

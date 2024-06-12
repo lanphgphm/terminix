@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.5
-import com.terminix 1.0
+import com.terminix 1.0 // needed to import ScreenController as QML
 
 Rectangle {
     id: screenView
@@ -24,12 +24,12 @@ Rectangle {
         target: screenController
         function onResultReadySendToView(result) {
             // virtual function: displayResult(QString result)
-            let newContent = listModel.get(0).content + "\n" + result; // \n will disrupt data longer than BUFFERSIZE in pty
+            let newContent = listModel.get(0).content + result;
             console.log(newContent); // DEBUG
             listModel.setProperty(0, "content", newContent);
 
-            listView.positionViewAtEnd(); // autoscroll down
-            // listView.forceLayout();
+            if (!listView.userScrolled)
+                listView.positionViewAtEnd(); // autoscroll down
         }
     }
 
@@ -41,6 +41,20 @@ Rectangle {
         width: parent ? parent.width : 0
         height: parent.height
 
+        property bool userScrolled: false
+        onContentYChanged: {
+            if (Math.abs(contentHeight - height - contentY) < 2) {
+                userScrolled = false; // User is at the bottom, allow autoscroll
+            }
+        }
+
+        ScrollBar.vertical: ScrollBar {
+            onActiveChanged: {
+                if (active) {
+                    listView.userScrolled = true;
+                }
+            }
+        }
 
         delegate: Item {
             width: parent? parent.width : 0
@@ -48,8 +62,6 @@ Rectangle {
 
             TextEdit {
                 id: outputArea
-
-                property bool isConnected: false
 
                 readOnly: true
                 visible: model.type === "outputText"
@@ -61,10 +73,7 @@ Rectangle {
                 color: "white"
 
                 wrapMode: TextEdit.Wrap
-                // only use this when ScreenController::ansiToHtml() works :)
-                // textFormat: TextEdit.RichText
-                // using PlainText by default
-                textFormat: TextEdit.PlainText
+                textFormat: TextEdit.RichText
                 text: model.content
             }
 
@@ -87,10 +96,7 @@ Rectangle {
                 onAccepted: {
                     // virtual function: commandEntered(QString command)
                     screenController.commandReceivedFromView(inputArea.text);
-                }
-
-                Component.onCompleted: {
-                    inputArea.forceActiveFocus();
+                    inputArea.text = "";
                 }
             }
         }

@@ -12,7 +12,7 @@ ApplicationWindow {
     visible: true
     visibility: Window.Windowed
 
-    // menuBar: TopMenuBar {} // irrelevant component
+    // menuBar: TopMenuBar {}
 
     SplitScreenView {
         id: rootSplitScreen

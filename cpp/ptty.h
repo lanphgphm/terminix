@@ -16,10 +16,10 @@
 #include <pty.h> // fork
 #include <sys/wait.h> // wait
 #include <stdlib.h> // exit, calloc
-#include <string.h> // strcmp, memmove
+#include <string.h> // strcmp
 #include <sys/ioctl.h> // ioctl
-#include <sys/select.h> // select
-#include <sys/stat.h> // system types
+// #include <sys/select.h> // select
+// #include <sys/stat.h> // system types
 #include <sys/types.h> // system types
 #include <termios.h> // posix terminal control
 #include <fcntl.h> // posix_openpt, open
@@ -47,7 +47,6 @@ public slots:
     void executeCommand(QString command);
 
 private:
-    int sanity = 2;
     pid_t m_pid;
     int m_masterFd;
     int m_slaveFd;
@@ -61,7 +60,6 @@ private:
     bool setupPty();
     bool pairMasterSlaveFd();
     bool spawnChildProcess();
-
 };
 
 #endif // PTTY_H

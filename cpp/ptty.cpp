@@ -59,19 +59,13 @@ bool Ptty::pairMasterSlaveFd(){
 }
 
 bool Ptty::spawnChildProcess(){
-    // char EV[][255] = {
-    //     "TERM=xterm-color", "COLORTERM=xterm",
-    //     "COLORFGBG=15;0", "LINES", "COLUMNS", "TERMCAP"
-    // };
-
-    // int N_EV = sizeof(EV) / sizeof(EV[0]);
-
     m_pid = fork();
     if (m_pid < 0) {
         perror("fork");
         return false;
     }
-    else if (m_pid > 0){ // parent process, only need masterFd
+    else if (m_pid > 0){
+        // parent process, only need masterFd
         ::close(m_slaveFd);
         return true;
     }
@@ -87,14 +81,14 @@ bool Ptty::spawnChildProcess(){
 
     // spawning bash session
     // set simplified prompt sequence
-    // execl("/bin/bash",
-    //       "/bin/bash",
-    //       "-c",
-    //       "export PS1='\\u@\\h\\$ '; exec /bin/bash -i",
-    //       (char*) NULL);
+    execl("/bin/bash",
+          "/bin/bash",
+          "-c",
+          "export PS1='\\u@\\h\\$ '; exec /bin/bash -i",
+          (char*) NULL);
 
     // baseline containing ansi escape as plaintext
-    execl("/bin/bash", "/bin/bash", (char*) NULL);
+    // execl("/bin/bash", "/bin/bash", (char*) NULL);
 
     // if got to here --> fail to exec bash
     perror("execl(bash)");
@@ -138,9 +132,9 @@ void Ptty::executeCommand(QString command){
 void Ptty::readLoop(){
     while(!m_stop){
         ssize_t count = ::read(m_masterFd, resultBuffer, BUFFER_SIZE-1);
-        if (count > 0) { // something was read from buffer
-            resultBuffer[count] = '\0'; // character not string :)
-            emit resultReceivedFromBash(QString::fromUtf8(resultBuffer));
+        if (count > 0) {
+            resultBuffer[count] = '\0';
+            emit resultReceivedFromBash(resultBuffer);
         }
         else if (count < 0) {
             perror("read");
@@ -148,7 +142,6 @@ void Ptty::readLoop(){
         else{
             perror("buffer empty");
         }
-
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
