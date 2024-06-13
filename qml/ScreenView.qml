@@ -1,13 +1,14 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.5
-import com.terminix 1.0 // needed to import ScreenController as QML
+import com.terminix 1.0 // needed to import ScreenController C++ as QML
 
 Rectangle {
     id: screenView
 
     // 1 controller instance per 1 view instance
     property ScreenController screenController: ScreenController{}
+    property bool isEnteringPassword: false
 
     color: "black"
     visible: true
@@ -24,8 +25,18 @@ Rectangle {
         target: screenController
         function onResultReadySendToView(result) {
             // virtual function: displayResult(QString result)
+            // --------TODO: need a better way to detect password :)----------------------
+            const passwordSynonyms = ['password', 'passwd', 'pass', 'authen',
+                                      'passcode', 'secret', 'passphrase',
+                                      'key', 'pin', 'authentication', 'token',
+                                      'credential', 'access code', 'security code'];
+            const regex = new RegExp(passwordSynonyms.join('|'), 'i'); // i = ignore casing
+            if (regex.test(result)) {
+                screenView.isEnteringPassword = true;
+            }
+            // ---------------------------------------------------------------------------
+
             let newContent = listModel.get(0).content + result;
-            console.log(newContent); // DEBUG
             listModel.setProperty(0, "content", newContent);
 
             if (!listView.userScrolled)
@@ -33,7 +44,8 @@ Rectangle {
         }
 
         function onTerminalSessionEnded() {
-            Qt.quit();
+            screenView.visible = false;
+            // if it's the last screen, Qt.quit()
         }
     }
 
@@ -48,7 +60,8 @@ Rectangle {
         property bool userScrolled: false
         onContentYChanged: {
             if (Math.abs(contentHeight - height - contentY) < 2) {
-                userScrolled = false; // User is at the bottom, allow autoscroll
+                // User is at the bottom, allow autoscroll
+                listView.userScrolled = false;
             }
         }
 
@@ -56,13 +69,14 @@ Rectangle {
             onActiveChanged: {
                 if (active) {
                     listView.userScrolled = true;
+                    qDebug() << "User is scrolling\n";
                 }
             }
         }
 
         delegate: Item {
             width: parent? parent.width : 0
-            height: model.type === "inputText" ? 30 : outputArea.height
+            height: model.type === "outputText" ? outputArea.height : 30
 
             TextEdit {
                 id: outputArea
@@ -78,7 +92,6 @@ Rectangle {
 
                 wrapMode: TextEdit.Wrap
                 textFormat: TextEdit.RichText
-                // textFormat: TextEdit.PlainText
                 text: model.content
             }
 
@@ -95,8 +108,9 @@ Rectangle {
                 font.bold: true
                 color: "green"
 
-                wrapMode: TextInput.Wrap
+                echoMode: screenView.isEnteringPassword ? TextInput.Password : TextInput.Normal
                 text: model.content
+                wrapMode: TextInput.Wrap
 
                 Keys.onPressed: (event) => { //   --------------bitmask----------------
                     if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
@@ -122,6 +136,7 @@ Rectangle {
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         screenController.commandReceivedFromView(text);
                         text = "";
+                        if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
                         event.accepted = true;
                     }
                 }

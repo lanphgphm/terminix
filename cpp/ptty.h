@@ -14,16 +14,15 @@
 
 #define SHELL "/bin/bash"
 
-#include <unistd.h> // fork, read, write, exec, dup2, close, setsid
-#include <pty.h> // fork
-#include <sys/wait.h> // wait
-#include <stdlib.h> // exit, calloc
-#include <string.h> // strcmp
-#include <sys/types.h> // pid_t
+#include <unistd.h> // fork, read, write, exec, dup2, close, setsid, setpgid
+#include <pty.h> // ioctl
+#include <stdlib.h> // exit
+#include <sys/types.h> // pid_t, ssize_t
 #include <fcntl.h> // posix_openpt
-#include <thread>
-#include <mutex>
-#include <signal.h>
+#include <thread> // thread, this_thread, detach, joinable, join, sleep_for
+
+#include <mutex> // lock_guard, mutex,lock
+#include <signal.h> // killpg
 
 #include <QObject>
 
@@ -54,6 +53,7 @@ private:
     std::mutex m_writeMutex;
     static const int BUFFER_SIZE = 4096;
     char resultBuffer[BUFFER_SIZE];
+    int SLEEP_TIME = 50;
 
     void readLoop();
     bool setupPty();

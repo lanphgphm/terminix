@@ -27,14 +27,12 @@ bool Ptty::pairMasterSlaveFd(){
         return false;
     }
 
-    int grantStatus = grantpt(m_masterFd); // grant slave
-    int unlockStatus = unlockpt(m_masterFd); // unlock both master & slave
-    if (grantStatus < 0) {
+    if (grantpt(m_masterFd) < 0) {
         perror("grantpt");
         ::close(m_masterFd);
         return false;
     }
-    if (unlockStatus < 0) {
+    if (unlockpt(m_masterFd) < 0) {
         perror("unlockpt");
         ::close(m_masterFd);
         return false;
@@ -59,14 +57,11 @@ bool Ptty::pairMasterSlaveFd(){
 }
 
 bool Ptty::setupPty(){
-    bool pairStatus = pairMasterSlaveFd();
-    bool spawnStatus = spawnChildProcess();
-
-    if (pairStatus < 0){
+    if (pairMasterSlaveFd() < 0){
         perror("pairMasterSlaveFd");
         return false;
     }
-    if (spawnStatus < 0){
+    if (spawnChildProcess() < 0){
         perror("spawnChildProcess");
         return false;
     }
@@ -76,7 +71,7 @@ bool Ptty::setupPty(){
 
 void Ptty::executeCommand(QString command){
     if (m_masterFd != -1){
-        std::lock_guard<std::mutex> lock(m_writeMutex); // dont need manual unlock
+        std::lock_guard<std::mutex> lock(m_writeMutex); // protect this thread
         tcflush(m_masterFd, TCIOFLUSH);
         QByteArray cmd = command.toUtf8() + "\n";
         ssize_t written = ::write(m_masterFd, cmd.data(), cmd.size());
@@ -95,6 +90,9 @@ void Ptty::readLoop(){
     while(!m_stop){
         ssize_t count = ::read(m_masterFd, resultBuffer, BUFFER_SIZE-1);
         if (count > 0) {
+            // ---TODO: buffer the readBuffer to capture full output----
+            // but the output does not have a endOfResult mark?
+            // ---------------------------------------------------------
             resultBuffer[count] = '\0';
             emit resultReceivedFromBash(resultBuffer);
         }
@@ -108,7 +106,7 @@ void Ptty::readLoop(){
             perror("PTY closed by child process");
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     }
     emit resultReceivedFromBash("Process has exited\n");
 }
@@ -151,8 +149,8 @@ bool Ptty::spawnChildProcess(){
     dup2(m_slaveFd, STDOUT_FILENO);
     dup2(m_slaveFd, STDERR_FILENO);
 
-    int setChildToItsGroupStatus = ioctl(m_slaveFd, TIOCSCTTY, 0);
-    if (setChildToItsGroupStatus == -1) {
+    // setting child as the leader of its own group
+    if (ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
         perror("ioctl(TIOSCTTY)");
         exit(EXIT_FAILURE);
         return false;
@@ -181,7 +179,6 @@ void Ptty::sendSignal(int signal){
         return;
     }
 
-    qDebug() << "Sending signal " << signal << " to process id " << fgPid;
     int sendSignalResult = killpg(fgPid, signal);
 
     if (sendSignalResult == -1){
