@@ -103,7 +103,7 @@ Rectangle {
                 //     inputArea.text = "";
                 // }
 
-                Keys.onPressed: {
+                Keys.onPressed: (event) => { //   --------------bitmask----------------
                     if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
                         screenController.handleControlKeyPress(Qt.Key_C);
                         event.accepted = true;

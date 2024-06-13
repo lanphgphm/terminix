@@ -12,13 +12,15 @@
 #ifndef PTTY_H
 #define PTTY_H
 
+#define SHELL "/bin/bash"
+
 #include <unistd.h> // fork, read, write, exec, dup2, close, setsid
 #include <pty.h> // fork
 #include <sys/wait.h> // wait
 #include <stdlib.h> // exit, calloc
 #include <string.h> // strcmp
 #include <sys/types.h> // pid_t
-#include <fcntl.h> // posix_openpt, open
+#include <fcntl.h> // posix_openpt
 #include <thread>
 #include <mutex>
 #include <signal.h>

@@ -17,7 +17,6 @@ Ptty::~Ptty(){
     stop();
     ::close(m_masterFd);
     ::close(m_slaveFd);
-    // maybe print something to ensure that all are done b4 actually shutting down
 }
 
 bool Ptty::pairMasterSlaveFd(){
@@ -100,7 +99,6 @@ void Ptty::readLoop(){
             emit resultReceivedFromBash(resultBuffer);
         }
         else if (count < 0) {
-            // IO error occured ~ unhandled "exit"
             // go inform ScreenController::resultReceivedFromPty() now!
             perror("read");
             break;
@@ -139,13 +137,6 @@ bool Ptty::spawnChildProcess(){
     else if (m_pid > 0){
         // parent process, only need masterFd
         ::close(m_slaveFd);
-
-        // Set the child process as the foreground process group
-        // if (tcsetpgrp(m_masterFd, m_pid) == -1) {
-        //     perror("tcsetpgrp");
-        //     return false;
-        // }
-
         return true;
     }
 
@@ -160,12 +151,13 @@ bool Ptty::spawnChildProcess(){
     dup2(m_slaveFd, STDOUT_FILENO);
     dup2(m_slaveFd, STDERR_FILENO);
 
-    // ensure that the child process is set as ITS OWN process group
-    // setpgid AFTER setsid() is called
-    // if (setpgid(0, 0) == -1) {
-    //     perror("setpgid");
-    //     exit(EXIT_FAILURE);
-    // }
+    int setChildToItsGroupStatus = ioctl(m_slaveFd, TIOCSCTTY, 0);
+    if (setChildToItsGroupStatus == -1) {
+        perror("ioctl(TIOSCTTY)");
+        exit(EXIT_FAILURE);
+        return false;
+    }
+    setpgid(0, 0);
 
     // spawning bash session
     execl("/bin/bash", "/bin/bash", (char*) NULL);
@@ -182,20 +174,15 @@ void Ptty::sendSignal(int signal){
         return;
     }
 
-    // // Get the foreground process group ID of the terminal
-    // pid_t fg_pgid = tcgetpgrp(m_masterFd);
-    // if (fg_pgid == -1) {
-    //     perror("tcgetpgrp");
-    //     return;
-    // }
-    // qDebug() << "Sending signal" << signal << "to process group" << fg_pgid;
+    // dynamically get current foreground process
+    pid_t fgPid = tcgetpgrp(m_masterFd);
+    if (fgPid == -1){
+        perror("tcgetpgrp");
+        return;
+    }
 
-    // // note: some forum discussions said to not use kill()
-    // // i have yet to understand why, the manpage for kill()
-    // // specifies usage similar how I am using it in this function
-    // int sendSignalResult = kill(-fg_pgid, signal);
-
-    int sendSignalResult = -1; // tmp :)
+    qDebug() << "Sending signal " << signal << " to process id " << fgPid;
+    int sendSignalResult = killpg(fgPid, signal);
 
     if (sendSignalResult == -1){
         perror("Failed to send signal");
