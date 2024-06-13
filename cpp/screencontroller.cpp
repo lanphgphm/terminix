@@ -71,6 +71,9 @@ QString ScreenController::processPrompt(const QString& ansiText){
 }
 
 QString ScreenController::ansiToHtml(const QString& ansiText) {
+    // --------IMPROVE 0.3: enable ascii graphic programs like sl---------------
+    // maybe set displaymode to RichText / PlainText based on the command
+    // ------------------------------------------------------------------
     QString htmlText = "<pre>"; // Preserve whitespace
     QString filteredAnsiText = processPrompt(ansiText);
 
@@ -79,8 +82,10 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
     filteredAnsiText.remove(titlePattern);
 
     // Remove bracketed paste sequences
+    // -------------IMPROVE 0.2: allowing bracketed paste-------------------
     static QRegularExpression bracketedPastePattern("\\x1b\\[\\?2004[hl]");
     filteredAnsiText.remove(bracketedPastePattern);
+    // -------------------------------------------------------------------
 
     // Match all ANSI escape sequences
     static QRegularExpression ansiPattern("\\x1b\\[([0-9;?]*)([a-zA-Z])");
@@ -107,9 +112,9 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
                 int num = code.toInt();
                 if (num == 0) { // Reset all formatting
                     reset = true;
-                } else if (num == 1) { // Bold text
+                } else if (num == 1) {
                     currentStyle += "font-weight:bold;";
-                } else if (colorMap.contains(num)) { // Color text
+                } else if (colorMap.contains(num)) {
                     currentStyle += "color:" + colorMap[num] + ";";
                 }
             }
@@ -136,8 +141,7 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
     }
     htmlText += "</pre>";
 
-    // Remove redundant <pre></pre> pairs
-    htmlText.replace("</pre><pre>", "");
+    // htmlText.replace("</pre><pre>", ""); // not working because this pair only exist in the already rendered output
 
     return htmlText;
 }

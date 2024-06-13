@@ -15,6 +15,13 @@ Rectangle {
     Layout.fillWidth: true
     Layout.fillHeight: true
 
+    function clearScreen() {
+        // -----TODO 1.1: implement clear screen--------
+        console.log("Implement later :D");
+        // listView.positionViewAtEnd();
+        // -----------------------------------------
+    }
+
     ListModel {
         id: listModel
         ListElement { type: "outputText"; content: "" }
@@ -25,7 +32,7 @@ Rectangle {
         target: screenController
         function onResultReadySendToView(result) {
             // virtual function: displayResult(QString result)
-            // --------TODO: need a better way to detect password :)----------------------
+            // --------IMPROVE 0.1: need a better way to detect password :)----------------------
             const passwordSynonyms = ['password', 'passwd', 'pass', 'authen',
                                       'passcode', 'secret', 'passphrase',
                                       'key', 'pin', 'authentication', 'token',
@@ -44,8 +51,9 @@ Rectangle {
         }
 
         function onTerminalSessionEnded() {
+            // -------TODO 1.4: if the only screen --> Qt.quit()-------
             screenView.visible = false;
-            // if it's the last screen, Qt.quit()
+            // ----------------------------------------------------
         }
     }
 
@@ -62,6 +70,7 @@ Rectangle {
             if (Math.abs(contentHeight - height - contentY) < 2) {
                 // User is at the bottom, allow autoscroll
                 listView.userScrolled = false;
+                console.log("User scrolling disabled");
             }
         }
 
@@ -69,7 +78,7 @@ Rectangle {
             onActiveChanged: {
                 if (active) {
                     listView.userScrolled = true;
-                    qDebug() << "User is scrolling\n";
+                    console.log("User is scrolling, autoscroll disabled");
                 }
             }
         }
@@ -112,9 +121,15 @@ Rectangle {
                 text: model.content
                 wrapMode: TextInput.Wrap
 
+                // TODO 1.2: Key_Up and Key_Down to search command history
+                // TODO 1.5: Tab-complete input
                 Keys.onPressed: (event) => { //   --------------bitmask----------------
                     if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
                         screenController.handleControlKeyPress(Qt.Key_C);
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
+                        clearScreen();
                         event.accepted = true;
                     }
                     else if (event.key === Qt.Key_Z && (event.modifiers & Qt.ControlModifier)) {

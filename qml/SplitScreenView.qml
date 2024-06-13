@@ -2,15 +2,20 @@ import QtQuick 2.12
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.5
 
+// TODO 1.3: a SplitView that works :)
+
 SplitView{
     id: splitScreen
 
     anchors.fill: parent
     orientation: Qt.Horizontal
 
+    // -------TODO 1.4: keep track of all opened screens----------
+    // && conditional Qt.quit() if only 1 screen left visible
     property ScreenView activeScreen: null
     property int activeScreenIdx: 0
     Component.onCompleted: activeScreen = initialScreen
+    // -------------------------------------------------------
 
     ScreenView {
         id: initialScreen

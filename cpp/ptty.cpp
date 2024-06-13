@@ -90,9 +90,9 @@ void Ptty::readLoop(){
     while(!m_stop){
         ssize_t count = ::read(m_masterFd, resultBuffer, BUFFER_SIZE-1);
         if (count > 0) {
-            // ---TODO: buffer the readBuffer to capture full output----
-            // but the output does not have a endOfResult mark?
-            // ---------------------------------------------------------
+            // ---TODO 1.6: buffer the readBuffer to capture full output----
+            // but the output does not have a endOfResult mark character?
+            // -------------------------------------------------------------
             resultBuffer[count] = '\0';
             emit resultReceivedFromBash(resultBuffer);
         }
