@@ -53,6 +53,8 @@ private:
         {36, "cyan"},
         {37, "white"}
     };
+
+    QString processPrompt(const QString& ansiText);
 };
 
 #endif // SCREENCONTROLLER_H

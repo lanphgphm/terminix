@@ -16,7 +16,7 @@ Rectangle {
 
     ListModel {
         id: listModel
-        ListElement { type: "outputText"; content: "Terminal initialized..." }
+        ListElement { type: "outputText"; content: "" }
         ListElement { type: "inputText"; content: "" }
     }
 
@@ -78,6 +78,7 @@ Rectangle {
 
                 wrapMode: TextEdit.Wrap
                 textFormat: TextEdit.RichText
+                // textFormat: TextEdit.PlainText
                 text: model.content
             }
 
@@ -96,12 +97,6 @@ Rectangle {
 
                 wrapMode: TextInput.Wrap
                 text: model.content
-
-                // onAccepted: {
-                //     // virtual function: commandEntered(QString command)
-                //     screenController.commandReceivedFromView(inputArea.text);
-                //     inputArea.text = "";
-                // }
 
                 Keys.onPressed: (event) => { //   --------------bitmask----------------
                     if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
