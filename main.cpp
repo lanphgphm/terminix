@@ -11,20 +11,6 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     ScreenController screenController;
-    // Ptty ptty;
-    // ptty.start();
-    // screenController.setPtty(&ptty);
-
-    // // controller forward data direction
-    // QObject::connect(&screenController,
-    //                  &ScreenController::commandReadySendToPty,
-    //                  &ptty,
-    //                  &Ptty::executeCommand);
-    // // controller backward data direction
-    // QObject::connect(&ptty,
-    //                  &Ptty::resultReceivedFromBash,
-    //                  &screenController,
-    //                  &ScreenController::resultReceivedFromPty);
 
     engine.rootContext()->setContextProperty("screenController", &screenController);
 
