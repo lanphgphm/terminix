@@ -12,7 +12,8 @@
 #ifndef PTTY_H
 #define PTTY_H
 
-#define SHELL "/bin/bash"
+#define BASH "/usr/bin/bash"
+#define ZSH "/usr/bin/zsh"
 
 #include <unistd.h> // fork, read, write, exec, dup2, close, setsid, setpgid
 #include <pty.h> // ioctl

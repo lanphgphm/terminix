@@ -10,7 +10,7 @@ Rectangle {
     property ScreenController screenController: ScreenController{}
     property bool isEnteringPassword: false
 
-    color: "black"
+    color: "#282a2e"
     visible: true
     Layout.fillWidth: true
     Layout.fillHeight: true
@@ -97,7 +97,7 @@ Rectangle {
 
                 font.family: "monospace"
                 font.pointSize: 12
-                color: "white"
+                color: "#d5d5d5"
 
                 wrapMode: TextEdit.Wrap
                 textFormat: TextEdit.RichText
@@ -115,7 +115,7 @@ Rectangle {
                 font.family: "monospace"
                 font.pointSize: 13
                 font.bold: true
-                color: "green"
+                color: "#88d22f"
 
                 echoMode: screenView.isEnteringPassword ? TextInput.Password : TextInput.Normal
                 text: model.content

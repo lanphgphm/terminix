@@ -158,7 +158,8 @@ bool Ptty::spawnChildProcess(){
     setpgid(0, 0);
 
     // spawning bash session
-    execl("/bin/bash", "/bin/bash", (char*) NULL);
+    execl(BASH, "bash", (char*) NULL);
+    // execl(ZSH, "zsh", (char*) NULL);
 
     // if got to here --> fail to exec bash
     perror("execl(bash)");

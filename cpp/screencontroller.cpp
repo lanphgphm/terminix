@@ -62,21 +62,22 @@ QString ScreenController::processPrompt(const QString& ansiText){
     if (promptMatch.hasMatch()) {
         QString promptText = promptMatch.captured(1);
         filteredAnsiText.replace(promptText,
-                                 "<span style=\"color:yellow;\"><b>"
+                                 "<span style=\"color:#cd7db7;\"><b>"
                                      + promptText.toHtmlEscaped()
                                      + "</b></span>");
     }
 
+    //-------------IMPROVE 0.4: color root prompt differently----------------
+    //----------------------------------------------------------------------
+
     return filteredAnsiText;
 }
 
-QString ScreenController::ansiToHtml(const QString& ansiText) {
-    // --------IMPROVE 0.3: enable ascii graphic programs like sl---------------
+QString removeAnsi(const QString& ansiTest){
+    // --------IMPROVE 0.3: enable ascii graphic programs like sl--------
     // maybe set displaymode to RichText / PlainText based on the command
     // ------------------------------------------------------------------
-    QString htmlText = "<pre>"; // Preserve whitespace
-    QString filteredAnsiText = processPrompt(ansiText);
-
+    QString filteredAnsiText = ansiText;
     // Remove window title sequences
     static QRegularExpression titlePattern("\\x1b]0;.*?\\x07");
     filteredAnsiText.remove(titlePattern);
@@ -85,7 +86,16 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
     // -------------IMPROVE 0.2: allowing bracketed paste-------------------
     static QRegularExpression bracketedPastePattern("\\x1b\\[\\?2004[hl]");
     filteredAnsiText.remove(bracketedPastePattern);
-    // -------------------------------------------------------------------
+    // ---------------------------------------------------------------------
+
+    return filteredAnsiText;
+}
+
+QString ScreenController::ansiToHtml(const QString& ansiText) {
+    QString htmlText = "<pre>"; // Preserve whitespace
+    QString filteredAnsiText = removeAnsi(ansiText);
+    filteredAnsiText = processPrompt(ansiText);
+
 
     // Match all ANSI escape sequences
     static QRegularExpression ansiPattern("\\x1b\\[([0-9;?]*)([a-zA-Z])");

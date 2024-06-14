@@ -44,17 +44,18 @@ private:
     };
 
     QMap<int, QString> colorMap = {
-        {30, "black"},
-        {31, "red"},
-        {32, "green"},
-        {33, "yellow"},
-        {34, "blue"},
-        {35, "magenta"},
-        {36, "cyan"},
-        {37, "white"}
+        {30, "#000000"}, // black
+        {31, "#a54242"}, // red
+        {32, "#88d22f"}, // green
+        {33, "#e8d366"}, // yellow
+        {34, "#38cbca"}, // blue
+        {35, "#cd7db7"}, // magenta
+        {36, "#b294bb"}, // cyan
+        {37, "#d5d5d5"} // white
     };
 
     QString processPrompt(const QString& ansiText);
+    QString removeAnsi(const QString& ansiTest);
 };
 
 #endif // SCREENCONTROLLER_H
