@@ -3,17 +3,6 @@
 
 #include "cpp/ptty.h"
 
-// to read and write /root/.bash_history
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <cerrno>
-#include <cstring>
-
 #include <QObject>
 #include <QProcess>
 #include <QFont>
@@ -80,9 +69,9 @@ private:
     int m_historyIndex;
     void loadBashCommandHistoryFile();
 
-    QStringList m_rootCommandHistory;
-    int m_rootHistoryIndex;
-    void loadRootBashCommandHistoryFile();
+    // QStringList m_rootCommandHistory;
+    // int m_rootHistoryIndex;
+    // void loadRootBashCommandHistoryFile();
 
     QString processPrompt(const QString& ansiText);
     QString removeAnsi(const QString& ansiTest);

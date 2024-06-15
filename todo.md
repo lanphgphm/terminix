@@ -7,12 +7,18 @@
 ### TODO
 - ~~TODO 1.0: fix a neutral-dark theme to make terminal looks more pleasant to the eye~~``
 - TODO 1.1: Ctrl+L to clear screen but can scroll back for past results 
-- ~~TODO 1.2: implement a command history that can be accessed by up/down arrow keys~~ --> only works in non-root mode. needs fixes for `/root/.bash_history`, preferably rewrite the 2 load functions in c++ instead of qml to avoid using QFile? 
-- TODO 1.3!: implement SplitView that WORKS 
+    - i have learned that most terminals handle this feature with ANSI escape codes, not padding the screen or adding empty lines
+    - i have tried to do screenpadding but it always pushes new text off of the screen which is even worse than not having autoscroll 
+    - the lesson is to parse ANSI escape codes correctly and handle a variety of them, not just discarding non-visual characters 
+- ~~TODO 1.2: implement a command history that can be accessed by up/down arrow keys~~ 
+    - currently, this works with the user that runs the app. switching user (like to root, or another user) should switch to a new `.bash_history`, but the corresponding history file is often reported to be not found or not readable. 
+    - most commented out code from screencontroller.cpp is related to this issue. the buggy code is commented out to improve the load time of the app but still left breadcrumbs for future attempts 
+- TODO 1.3!!: implement SplitView that WORKS 
 - TODO 1.4: handle screen exiting -- set screen invisible if other screens exist, Qt.quit() if only screen left 
 - TODO 1.5: implement tab-completion 
 - TODO 1.6: buffer the readBuffer to wait for output end beforeemitting the WHOLE output to screen -- which would fix the output of programs like `pstree` 
-- TODO 1.7!: cannot send signals (SIGINT, SIGTSTP, etc.) when in root mode
+- TODO 1.7!: cannot send signals (SIGINT, SIGTSTP, etc.) when in root mode 
+    - needs to crosscheck with TODO 1.2 to see if it's a problem of switching user in general and not just root 
 
 | Issue | Reference file | 
 | --- | --- | 

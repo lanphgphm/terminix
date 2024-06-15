@@ -6,7 +6,7 @@ ScreenController::ScreenController(QObject* parent)
     : QObject(parent)
     , m_ptty(new Ptty(this))
     , m_historyIndex(0)
-    , m_rootHistoryIndex(0)
+    // , m_rootHistoryIndex(0)
 {
     // constructor
     m_ptty->start();
@@ -21,7 +21,6 @@ ScreenController::ScreenController(QObject* parent)
                      &Ptty::executeCommand);
 
     loadBashCommandHistoryFile();
-    // loadRootBashCommandHistoryFile(); // ONLY OPEN THIS ONCE ENTER ROOT MODE
 }
 
 ScreenController::~ScreenController() {
@@ -74,7 +73,7 @@ QString ScreenController::processPrompt(const QString& ansiText){
 
         // only load /root/.bash_history in root mode
         // to avoid read permission denied
-        if (isRoot) loadRootBashCommandHistoryFile();
+        // if (isRoot) loadRootBashCommandHistoryFile();
 
         if (!isRoot) filteredAnsiText.replace(promptMatch.captured(0),
                                  "<span style=\"color:#cd7db7;\"><b>"
@@ -173,32 +172,32 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
 }
 
 void ScreenController::commandHistoryUp() {
-    if (isRoot){
-        if (m_rootHistoryIndex > 0){
-            m_rootHistoryIndex--;
-            emit showCommand(m_rootCommandHistory.at(m_rootHistoryIndex));
-        }
-    }
-    else {
+    // if (isRoot){
+    //     if (m_rootHistoryIndex > 0){
+    //         m_rootHistoryIndex--;
+    //         emit showCommand(m_rootCommandHistory.at(m_rootHistoryIndex));
+    //     }
+    // }
+    // else {
         if (m_historyIndex > 0) {
             m_historyIndex--;
             emit showCommand(m_commandHistory.at(m_historyIndex));
         }
-    }
+    // }
 }
 
 void ScreenController::commandHistoryDown() {
-    if (isRoot){
-        if (m_rootHistoryIndex < m_rootCommandHistory.size() -1) {
-            m_rootHistoryIndex++;
-            emit showCommand(m_rootCommandHistory.at(m_rootHistoryIndex));
-        }
-        else{ // at the end of root history
-            m_rootHistoryIndex = m_rootCommandHistory.size();
-            emit showCommand("");
-        }
-    }
-    else {
+    // if (isRoot){
+    //     if (m_rootHistoryIndex < m_rootCommandHistory.size() -1) {
+    //         m_rootHistoryIndex++;
+    //         emit showCommand(m_rootCommandHistory.at(m_rootHistoryIndex));
+    //     }
+    //     else{ // at the end of root history
+    //         m_rootHistoryIndex = m_rootCommandHistory.size();
+    //         emit showCommand("");
+    //     }
+    // }
+    // else {
         if (m_historyIndex < m_commandHistory.size() - 1) {
             m_historyIndex++;
             emit showCommand(m_commandHistory.at(m_historyIndex));
@@ -206,21 +205,19 @@ void ScreenController::commandHistoryDown() {
             m_historyIndex = m_commandHistory.size();
             emit showCommand("");
         }
-    }
+    // }
 }
 
 void ScreenController::logCommand(QString command){
-    if (isRoot){
-        m_rootCommandHistory.append(command);
-        m_rootHistoryIndex = m_rootCommandHistory.size();
-    }
-    else{
+    // if (isRoot){
+    //     m_rootCommandHistory.append(command);
+    //     m_rootHistoryIndex = m_rootCommandHistory.size();
+    // }
+    // else{
         m_commandHistory.append(command);
         m_historyIndex = m_commandHistory.size();
-    }
+    // }
 }
-
-// translate to c++ and make compatible with usage of QString elsewhere
 
 void ScreenController::loadBashCommandHistoryFile() {
     QFile filepath(QDir::homePath() + "/.bash_history");
@@ -237,26 +234,26 @@ void ScreenController::loadBashCommandHistoryFile() {
 }
 
 
-void ScreenController::loadRootBashCommandHistoryFile() {
-    QFile filepath("/root/.bash_history");
-    if (!filepath.exists()) {
-        qDebug() << "/root/.bash_history does not exist.";
-        return;
-    }
+// void ScreenController::loadRootBashCommandHistoryFile() {
+//     QFile filepath("/root/.bash_history");
+//     if (!filepath.exists()) {
+//         qDebug() << "/root/.bash_history does not exist.";
+//         return;
+//     }
 
-    if (!filepath.isReadable()) {
-        qDebug() << "/root/.bash_history is not readable.";
-        return;
-    }
+//     if (!filepath.isReadable()) {
+//         qDebug() << "/root/.bash_history is not readable.";
+//         return;
+//     }
 
-    if (filepath.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QTextStream inputStream(&filepath);
-        while (!inputStream.atEnd()) {
-            m_rootCommandHistory.append(inputStream.readLine());
-        }
-        filepath.close();
-        m_rootHistoryIndex = m_rootCommandHistory.size();
-    } else {
-        perror("Unable to open /root/.bash_history");
-    }
-}
+//     if (filepath.open(QIODevice::ReadOnly | QIODevice::Text)) {
+//         QTextStream inputStream(&filepath);
+//         while (!inputStream.atEnd()) {
+//             m_rootCommandHistory.append(inputStream.readLine());
+//         }
+//         filepath.close();
+//         m_rootHistoryIndex = m_rootCommandHistory.size();
+//     } else {
+//         perror("Unable to open /root/.bash_history");
+//     }
+// }
