@@ -79,6 +79,7 @@ void Ptty::executeCommand(QString command){
         if (written < 0) {
             perror("write(masterFd)");
         } else if (written < cmd.size()) {
+            // CONCERN 1.0
             // in case the entire command cant be written at once
             qDebug("Warning: Not all bytes were written to the terminal.");
         }
@@ -102,6 +103,7 @@ void Ptty::readLoop(){
             break;
         }
         else{
+            // CONCERN 1.1
             // count == 0 means child process has closed PTY for some reasons
             perror("PTY closed by child process");
             break;
@@ -183,6 +185,7 @@ void Ptty::sendSignal(int signal){
     int sendSignalResult = killpg(fgPid, signal);
 
     if (sendSignalResult == -1){
+        // TODO 1.7: cannot send signals as root?
         perror("Failed to send signal");
     }
     else {

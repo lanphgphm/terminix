@@ -3,7 +3,10 @@
 #include <QtDebug> // qDebug overload
 
 ScreenController::ScreenController(QObject* parent)
-    : QObject(parent), m_ptty(new Ptty(this))
+    : QObject(parent)
+    , m_ptty(new Ptty(this))
+    , m_historyIndex(0)
+    , m_rootHistoryIndex(0)
 {
     // constructor
     m_ptty->start();
@@ -16,6 +19,9 @@ ScreenController::ScreenController(QObject* parent)
                      &ScreenController::commandReadySendToPty,
                      m_ptty,
                      &Ptty::executeCommand);
+
+    loadBashCommandHistoryFile();
+    // loadRootBashCommandHistoryFile(); // ONLY OPEN THIS ONCE ENTER ROOT MODE
 }
 
 ScreenController::~ScreenController() {
@@ -56,34 +62,44 @@ QString ScreenController::processPrompt(const QString& ansiText){
     static QRegularExpression bracketedPastePattern("\\x1b\\[\\?2004[h|l]");
     filteredAnsiText.remove(bracketedPastePattern);
 
-    // Regular expression to match the user prompt
-    static QRegularExpression promptPattern(R"((\[.*?@.*?\]\$))");
+    //                                         -----g1----  --g2---
+    static QRegularExpression promptPattern(R"(\[(.*?@.*?)\]([$#]))");
     QRegularExpressionMatch promptMatch = promptPattern.match(filteredAnsiText);
     if (promptMatch.hasMatch()) {
-        QString promptText = promptMatch.captured(1);
-        filteredAnsiText.replace(promptText,
-                                 "<span style=\"color:#cd7db7;\"><b>"
-                                     + promptText.toHtmlEscaped()
-                                     + "</b></span>");
-    }
+        // QString promptText = promptMatch.captured(1); // g1
+        QString promptSymbol = promptMatch.captured(2); // g2
 
-    //-------------IMPROVE 0.4: color root prompt differently----------------
-    //----------------------------------------------------------------------
+        // toggle root status
+        bool isRoot = (promptSymbol == "#");
+
+        // only load /root/.bash_history in root mode
+        // to avoid read permission denied
+        if (isRoot) loadRootBashCommandHistoryFile();
+
+        if (!isRoot) filteredAnsiText.replace(promptMatch.captured(0),
+                                 "<span style=\"color:#cd7db7;\"><b>"
+                                     + promptMatch.captured(0).toHtmlEscaped()
+                                     + "</b></span>");
+        else filteredAnsiText.replace(promptMatch.captured(0),
+                                     "<span style=\"color:#a54242;\"><b>"
+                                         + promptMatch.captured(0).toHtmlEscaped()
+                                         + "</b></span>");
+    }
 
     return filteredAnsiText;
 }
 
-QString removeAnsi(const QString& ansiTest){
-    // --------IMPROVE 0.3: enable ascii graphic programs like sl--------
+QString ScreenController::removeAnsi(const QString& ansiText){
+    // --------IMPROVE 1.2: enable ascii graphic programs like sl--------
     // maybe set displaymode to RichText / PlainText based on the command
     // ------------------------------------------------------------------
     QString filteredAnsiText = ansiText;
-    // Remove window title sequences
+    // ignore window title escape characters
     static QRegularExpression titlePattern("\\x1b]0;.*?\\x07");
     filteredAnsiText.remove(titlePattern);
 
-    // Remove bracketed paste sequences
-    // -------------IMPROVE 0.2: allowing bracketed paste-------------------
+    // ignore bracketed paste escape characters
+    // -------------IMPROVE 1.1: allowing bracketed paste-------------------
     static QRegularExpression bracketedPastePattern("\\x1b\\[\\?2004[hl]");
     filteredAnsiText.remove(bracketedPastePattern);
     // ---------------------------------------------------------------------
@@ -154,4 +170,93 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
     // htmlText.replace("</pre><pre>", ""); // not working because this pair only exist in the already rendered output
 
     return htmlText;
+}
+
+void ScreenController::commandHistoryUp() {
+    if (isRoot){
+        if (m_rootHistoryIndex > 0){
+            m_rootHistoryIndex--;
+            emit showCommand(m_rootCommandHistory.at(m_rootHistoryIndex));
+        }
+    }
+    else {
+        if (m_historyIndex > 0) {
+            m_historyIndex--;
+            emit showCommand(m_commandHistory.at(m_historyIndex));
+        }
+    }
+}
+
+void ScreenController::commandHistoryDown() {
+    if (isRoot){
+        if (m_rootHistoryIndex < m_rootCommandHistory.size() -1) {
+            m_rootHistoryIndex++;
+            emit showCommand(m_rootCommandHistory.at(m_rootHistoryIndex));
+        }
+        else{ // at the end of root history
+            m_rootHistoryIndex = m_rootCommandHistory.size();
+            emit showCommand("");
+        }
+    }
+    else {
+        if (m_historyIndex < m_commandHistory.size() - 1) {
+            m_historyIndex++;
+            emit showCommand(m_commandHistory.at(m_historyIndex));
+        } else { // at the end of history
+            m_historyIndex = m_commandHistory.size();
+            emit showCommand("");
+        }
+    }
+}
+
+void ScreenController::logCommand(QString command){
+    if (isRoot){
+        m_rootCommandHistory.append(command);
+        m_rootHistoryIndex = m_rootCommandHistory.size();
+    }
+    else{
+        m_commandHistory.append(command);
+        m_historyIndex = m_commandHistory.size();
+    }
+}
+
+// translate to c++ and make compatible with usage of QString elsewhere
+
+void ScreenController::loadBashCommandHistoryFile() {
+    QFile filepath(QDir::homePath() + "/.bash_history");
+    if (filepath.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream inputStream(&filepath);
+        while (!inputStream.atEnd()) {
+            m_commandHistory.append(inputStream.readLine());
+        }
+        filepath.close();
+        m_historyIndex = m_commandHistory.size();
+    } else {
+        perror("Unable to open ~/.bash_history or file does not exist");
+    }
+}
+
+
+void ScreenController::loadRootBashCommandHistoryFile() {
+    QFile filepath("/root/.bash_history");
+    if (!filepath.exists()) {
+        qDebug() << "/root/.bash_history does not exist.";
+        return;
+    }
+
+    if (!filepath.isReadable()) {
+        qDebug() << "/root/.bash_history is not readable.";
+        return;
+    }
+
+    if (filepath.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream inputStream(&filepath);
+        while (!inputStream.atEnd()) {
+            m_rootCommandHistory.append(inputStream.readLine());
+        }
+        filepath.close();
+        m_rootHistoryIndex = m_rootCommandHistory.size();
+    } else {
+        perror("Unable to open /root/.bash_history");
+    }
 }

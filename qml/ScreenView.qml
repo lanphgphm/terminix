@@ -32,7 +32,7 @@ Rectangle {
         target: screenController
         function onResultReadySendToView(result) {
             // virtual function: displayResult(QString result)
-            // --------IMPROVE 0.1: need a better way to detect password :)----------------------
+            // --------IMPROVE 1.0: need a better way to detect password :)----------------------
             const passwordSynonyms = ['password', 'passwd', 'pass', 'authen',
                                       'passcode', 'secret', 'passphrase',
                                       'key', 'pin', 'authentication', 'token',
@@ -41,6 +41,7 @@ Rectangle {
             if (regex.test(result)) {
                 screenView.isEnteringPassword = true;
             }
+            else screenView.isEnteringPassword = false;
             // ---------------------------------------------------------------------------
 
             let newContent = listModel.get(0).content + result;
@@ -55,6 +56,11 @@ Rectangle {
             screenView.visible = false;
             // ----------------------------------------------------
         }
+
+        function onShowCommand(command) {
+            // inputArea.text = command;
+            listView.currentItem.setCommand(command);
+        }
     }
 
     ListView {
@@ -64,6 +70,7 @@ Rectangle {
         anchors.fill: parent
         width: parent ? parent.width : 0
         height: parent.height
+        currentIndex: 1
 
         property bool userScrolled: false
         onContentYChanged: {
@@ -121,11 +128,19 @@ Rectangle {
                 text: model.content
                 wrapMode: TextInput.Wrap
 
-                // TODO 1.2: Key_Up and Key_Down to search command history
                 // TODO 1.5: Tab-complete input
                 Keys.onPressed: (event) => { //   --------------bitmask----------------
                     if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
                         screenController.handleControlKeyPress(Qt.Key_C);
+                        inputArea.text = "";
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_Up) {
+                        screenController.commandHistoryUp();
+                        event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_Down) {
+                        screenController.commandHistoryDown();
                         event.accepted = true;
                     }
                     else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
@@ -150,11 +165,16 @@ Rectangle {
                     }
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         screenController.commandReceivedFromView(text);
+                        if (!screenView.isEnteringPassword) screenController.logCommand(text);
                         text = "";
                         if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
                         event.accepted = true;
                     }
                 }
+            }
+
+            function setCommand(command) {
+                inputArea.text = command;
             }
         }
     }
