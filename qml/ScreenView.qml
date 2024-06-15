@@ -18,7 +18,6 @@ Rectangle {
     function clearScreen() {
         // -----TODO 1.1: implement clear screen--------
         console.log("Implement later :D");
-        // listView.positionViewAtEnd();
         // -----------------------------------------
     }
 
@@ -31,7 +30,6 @@ Rectangle {
     Connections {
         target: screenController
         function onResultReadySendToView(result) {
-            // virtual function: displayResult(QString result)
             // --------IMPROVE 1.0: need a better way to detect password :)----------------------
             const passwordSynonyms = ['password', 'passwd', 'pass', 'authen',
                                       'passcode', 'secret', 'passphrase',
@@ -52,13 +50,10 @@ Rectangle {
         }
 
         function onTerminalSessionEnded() {
-            // -------TODO 1.4: if the only screen --> Qt.quit()-------
             screenView.visible = false;
-            // ----------------------------------------------------
         }
 
         function onShowCommand(command) {
-            // inputArea.text = command;
             listView.currentItem.setCommand(command);
         }
     }
@@ -77,7 +72,6 @@ Rectangle {
             if (Math.abs(contentHeight - height - contentY) < 2) {
                 // User is at the bottom, allow autoscroll
                 listView.userScrolled = false;
-                console.log("User scrolling disabled");
             }
         }
 
@@ -85,7 +79,6 @@ Rectangle {
             onActiveChanged: {
                 if (active) {
                     listView.userScrolled = true;
-                    console.log("User is scrolling, autoscroll disabled");
                 }
             }
         }
