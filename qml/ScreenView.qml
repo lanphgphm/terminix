@@ -8,7 +8,8 @@ Rectangle {
 
     // 1 controller instance per 1 view instance
     property ScreenController screenController: ScreenController{}
-    property bool isEnteringPassword: false
+    property bool isEnteringPassword
+    signal sessionEnded()
 
     color: "#282a2e"
     visible: true
@@ -51,6 +52,7 @@ Rectangle {
 
         function onTerminalSessionEnded() {
             screenView.visible = false;
+            sessionEnded();
         }
 
         function onShowCommand(command) {

@@ -98,8 +98,8 @@ void Ptty::readLoop(){
             emit resultReceivedFromBash(resultBuffer);
         }
         else if (count < 0) {
-            // go inform ScreenController::resultReceivedFromPty() now!
-            perror("read");
+            // go inform ScreenController::resultReceivedFromPty()
+            // to close session and hide terminal window
             break;
         }
         else{

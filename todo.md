@@ -17,7 +17,7 @@
     - current view splits but not automatically resizing. issue is due to the fact that all splitviews are children of the rootspitview
     - the view family tree has height = 1, all children of rootSplitView 
     - due to this, the text is not wrapping as expected either 
-- TODO 1.4: handle screen exiting -- set screen invisible if other screens exist, Qt.quit() if only screen left 
+- ~~TODO 1.4: handle screen exiting -- set screen invisible if other screens exist, Qt.quit() if only screen left~~
 - TODO 1.5: implement tab-completion 
 - TODO 1.6: buffer the readBuffer to wait for output end beforeemitting the WHOLE output to screen -- which would fix the output of programs like `pstree` 
 - TODO 1.7!: cannot send signals (SIGINT, SIGTSTP, etc.) when in root mode 
