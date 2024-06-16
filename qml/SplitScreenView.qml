@@ -2,8 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.5
 
-// TODO 1.3: a SplitView that works :)
-
+// TODO 1.3: detect the border of splitView and confine the text to wrap inside that border
 SplitView{
     id: splitScreen
 

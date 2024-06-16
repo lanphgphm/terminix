@@ -13,7 +13,10 @@
 - ~~TODO 1.2: implement a command history that can be accessed by up/down arrow keys~~ 
     - currently, this works with the user that runs the app. switching user (like to root, or another user) should switch to a new `.bash_history`, but the corresponding history file is often reported to be not found or not readable. 
     - most commented out code from screencontroller.cpp is related to this issue. the buggy code is commented out to improve the load time of the app but still left breadcrumbs for future attempts 
-- TODO 1.3!!: implement SplitView that WORKS 
+- ~~TODO 1.3!!: implement SplitView that WORKS~~
+    - current view splits but not automatically resizing. issue is due to the fact that all splitviews are children of the rootspitview
+    - the view family tree has height = 1, all children of rootSplitView 
+    - due to this, the text is not wrapping as expected either 
 - TODO 1.4: handle screen exiting -- set screen invisible if other screens exist, Qt.quit() if only screen left 
 - TODO 1.5: implement tab-completion 
 - TODO 1.6: buffer the readBuffer to wait for output end beforeemitting the WHOLE output to screen -- which would fix the output of programs like `pstree` 
