@@ -70,13 +70,13 @@ SplitView{
 
             if(orientation === "Qt.Horizontal"){ // split vertical
                 let eachWidth = newSplitView.width / 2;
-                oldScreen.preferredWidth = eachWidth;
-                newScreen.preferredWidth = eachWidth;
+                oldScreen.width = eachWidth;
+                newScreen.width = eachWidth;
             }
             else { // split horizontal
                 let eachHeight = newSplitView.height / 2;
-                oldScreen.preferredHeight = eachHeight;
-                newScreen.preferredHeight = eachHeight;
+                oldScreen.height = eachHeight;
+                newScreen.height = eachHeight;
             }
 
             splitScreen.insertItem(splitScreen.activeScreenIdx, newSplitView);

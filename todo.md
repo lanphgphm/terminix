@@ -22,6 +22,9 @@
 - TODO 1.6: buffer the readBuffer to wait for output end beforeemitting the WHOLE output to screen -- which would fix the output of programs like `pstree` 
 - TODO 1.7!: cannot send signals (SIGINT, SIGTSTP, etc.) when in root mode 
     - needs to crosscheck with TODO 1.2 to see if it's a problem of switching user in general and not just root 
+- TODO 1.8!!!!: parsing ANSI correctly to support text editors within a terminal like `nano` or `vim`
+    - this is a big task that requires proper ANSI code parsing 
+    - fixing this will also support the output of `man-pages`, `htop`, and other programs that use ANSI codes
 
 | Issue | Reference file | 
 | --- | --- | 
@@ -33,12 +36,15 @@
 | TODO 1.5 | `ScreenView.qml` |
 | TODO 1.6 | `ptty.cpp` |
 | TODO 1.7 | `ptty.cpp` |
+| TODO 1.8 | none |
 
 ### IMPROVE
 - IMPROVE 1.0: a better way to handle password input detection
 - IMPROVE 1.1: allowing bracketed pasting 
 - IMPROVE 1.2: support ascii art rendering like the output of sl -- maybe swap RichText-PlainText mode depends on the command? 
 - ~~IMPROVE 1.3: color root prompt differently~~
+- IMPROVE 1.4: adding application icon in the title bar 
+    - this turns out to be not straight forward because the desktop environment controls the application icon, not the application itself 
 
 | Issue | Reference file |
 | --- | --- |
@@ -46,6 +52,7 @@
 | IMPROVE 1.1 | `screencontroller.cpp` |
 | IMPROVE 1.2 | `screencontroller.cpp` |
 | IMPROVE 1.3 | `screencontroller.cpp` |
+| IMPROVE 1.4 | none |
 
 ### CONCERN
 - CONCERN 1.0: do we need to handle the case where the command is not written in full? like how can this happen? 

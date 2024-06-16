@@ -1,5 +1,7 @@
-# Terminix 
+# ![AppIcon](./resources/icons/small_butter.png) Terminix 
 A tiling terminal emulator for Linux and high POSIX-compatible operating systems. Written in QtQuick/QML 6.7 and C++. 
+
+![Preview](./resources/demo.png)
 
 ## Features
 - Open and tile multiple terminal instances in a single application window 
