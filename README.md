@@ -27,7 +27,7 @@ See video of product preview: https://m.youtube.com/watch?v=0N2QZHG9Hjs
 
 ### Build instructions: 
 1. Clone the repository
-2. Open the project in QtCreator any IDE/text editor of choice 
+2. Open the project in QtCreator or any IDE/text editor of choice 
 3. Create a `build` directory in the project root
 4. To build and run the project: 
     
