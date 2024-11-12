@@ -3,6 +3,9 @@
         "*.tcc": "cpp",
         "fstream": "cpp",
         "locale": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "cstring": "cpp",
+        "cstdlib": "cpp",
+        "qtglobal": "cpp"
     }
 }

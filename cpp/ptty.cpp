@@ -3,6 +3,8 @@
 #include <QtGlobal> // qDebug
 #include <QtDebug> // qDebug overload
 
+extern char** environ; 
+
 Ptty::Ptty(QObject* parent)
     : QObject(parent)
     , m_stop(false)
@@ -159,12 +161,21 @@ bool Ptty::spawnChildProcess(){
     }
     setpgid(0, 0);
 
+    // setenv("DISPLAY", ":0.0", 1);
+    // setenv("XAUTHORITY", "/home/lanphgphm/.Xauthority", 1);
+    // printf("DISPLAY: %s\n", getenv("DISPLAY"));
+    // printf("XAUTHORITY: %s\n", getenv("XAUTHORITY"));
+
     // spawning bash session
-    execl(BASH, "bash", (char*) NULL);
-    // execl(ZSH, "zsh", (char*) NULL);
+    // char* const argv[] = {(char*)"bash", nullptr}; 
+    // execve(BASH, argv, environ);
+   
+    const char* nutshellPath = "/home/lanphgphm/Projects/terminix/cpp/demo"; 
+    char* const argv[] = {(char*)"demo", nullptr}; 
+    execve(nutshellPath, argv, environ);
 
     // if got to here --> fail to exec bash
-    perror("execl(bash)");
+    perror("execve");
     exit(EXIT_FAILURE);
     return false;
 }

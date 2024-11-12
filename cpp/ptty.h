@@ -16,6 +16,8 @@
 #define ZSH "/usr/bin/zsh"
 
 #include <unistd.h> // fork, read, write, exec, dup2, close, setsid, setpgid
+#include <cstring>  // strerror
+#include <cstdlib>  // environ
 #include <pty.h> // ioctl
 #include <stdlib.h> // exit
 #include <sys/types.h> // pid_t, ssize_t
