@@ -62,7 +62,8 @@ QString ScreenController::processPrompt(const QString& ansiText){
     filteredAnsiText.remove(bracketedPastePattern);
 
     //                                         -----g1----  --g2---
-    static QRegularExpression promptPattern(R"(\[(.*?@.*?)\]([$#]))");
+    // static QRegularExpression promptPattern(R"(\[(.*?@.*?)\]([$#]))");
+    static QRegularExpression promptPattern(R"(nutshell>)");
     QRegularExpressionMatch promptMatch = promptPattern.match(filteredAnsiText);
     if (promptMatch.hasMatch()) {
         // QString promptText = promptMatch.captured(1); // g1
