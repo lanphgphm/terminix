@@ -23,32 +23,32 @@ Ptty::~Ptty(){
 
 bool Ptty::pairMasterSlaveFd(){
     // opening master side of pty
-    m_masterFd = posix_openpt(O_NOCTTY | O_RDWR);
+    m_masterFd = ::posix_openpt(O_NOCTTY | O_RDWR);
     if (m_masterFd < 0) {
         perror("posix_openpt");
         return false;
     }
 
-    if (grantpt(m_masterFd) < 0) {
+    if (::grantpt(m_masterFd) < 0) {
         perror("grantpt");
         ::close(m_masterFd);
         return false;
     }
-    if (unlockpt(m_masterFd) < 0) {
+    if (::unlockpt(m_masterFd) < 0) {
         perror("unlockpt");
         ::close(m_masterFd);
         return false;
     }
 
     // opening slave side of pty
-    char* slaveFileName = ptsname(m_masterFd);
+    char* slaveFileName = ::ptsname(m_masterFd);
     if (slaveFileName == NULL) {
         perror("ptsname");
         ::close(m_masterFd);
         return false;
     }
 
-    m_slaveFd = open(slaveFileName, O_NOCTTY | O_RDWR);
+    m_slaveFd = ::open(slaveFileName, O_NOCTTY | O_RDWR);
     if (m_slaveFd < 0){
         perror("open(slaveFileName)");
         ::close(m_masterFd);
@@ -86,7 +86,7 @@ void Ptty::executeCommand(QString command){
             qDebug("Warning: Not all bytes were written to the terminal.");
         }
     }
-    // mutex lock auto release when out of scope
+    // mutex lock auto release when out of scope (behavior of std::lock_guard)
 }
 
 void Ptty::readLoop(){
@@ -143,28 +143,23 @@ bool Ptty::spawnChildProcess(){
     }
 
     // setting child process as session leader
-    setsid();
+    ::setsid();
 
     // child process, only need slaveFd
     ::close(m_masterFd);
 
     // set slave side of pty as stdin, stdout, stderr
-    dup2(m_slaveFd, STDIN_FILENO);
-    dup2(m_slaveFd, STDOUT_FILENO);
-    dup2(m_slaveFd, STDERR_FILENO);
+    ::dup2(m_slaveFd, STDIN_FILENO);
+    ::dup2(m_slaveFd, STDOUT_FILENO);
+    ::dup2(m_slaveFd, STDERR_FILENO);
 
     // setting child as the leader of its own group
     if (ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
         perror("ioctl(TIOSCTTY)");
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
         return false;
     }
-    setpgid(0, 0);
-
-    // setenv("DISPLAY", ":0.0", 1);
-    // setenv("XAUTHORITY", "/home/lanphgphm/.Xauthority", 1);
-    // printf("DISPLAY: %s\n", getenv("DISPLAY"));
-    // printf("XAUTHORITY: %s\n", getenv("XAUTHORITY"));
+    ::setpgid(0, 0);
 
     // spawning bash session
     // char* const argv[] = {(char*)"bash", nullptr}; 
@@ -176,7 +171,7 @@ bool Ptty::spawnChildProcess(){
 
     // if got to here --> fail to exec bash
     perror("execve");
-    exit(EXIT_FAILURE);
+    _exit(EXIT_FAILURE);
     return false;
 }
 
