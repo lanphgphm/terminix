@@ -167,7 +167,7 @@ bool Ptty::spawnChildProcess(){
    
     const char* nutshellPath = "/home/lanphgphm/Projects/terminix/cpp/demo"; 
     char* const argv[] = {(char*)"demo", nullptr}; 
-    execve(nutshellPath, argv, environ);
+    ::execve(nutshellPath, argv, environ);
 
     // if got to here --> fail to exec bash
     perror("execve");
