@@ -156,7 +156,7 @@ bool Ptty::spawnChildProcess(){
     // setting child as the leader of its own group
     if (ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
         perror("ioctl(TIOSCTTY)");
-        _exit(EXIT_FAILURE);
+        ::_exit(EXIT_FAILURE);
         return false;
     }
     ::setpgid(0, 0);
@@ -171,7 +171,7 @@ bool Ptty::spawnChildProcess(){
 
     // if got to here --> fail to exec bash
     perror("execve");
-    _exit(EXIT_FAILURE);
+    ::_exit(EXIT_FAILURE);
     return false;
 }
 
