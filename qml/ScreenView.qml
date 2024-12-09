@@ -1,14 +1,11 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.5
-import com.terminix 1.0 // needed to import ScreenController C++ as QML
 
 Rectangle {
     id: screenView
 
-    // 1 controller instance per 1 view instance
     property int defheight: 25
-    property ScreenController screenController: ScreenController{}
     property bool isEnteringPassword
     signal sessionEnded()
 

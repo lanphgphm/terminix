@@ -7,6 +7,7 @@ ScreenController::ScreenController(QObject* parent)
     , m_ptty(new Ptty(this))
 {
     // constructor
+    qDebug() << "Constructing ScreenController...";
     m_ptty->start();
 
     QObject::connect(m_ptty,
@@ -67,8 +68,7 @@ QString ScreenController::processPrompt(const QString& ansiText){
 
 QString ScreenController::ansiToHtml(const QString& ansiText) {
     QString htmlText = "<pre>"; // Preserve whitespace
-    QString filteredAnsiText = ansiText;
-    filteredAnsiText = processPrompt(ansiText);
+    QString filteredAnsiText = processPrompt(ansiText);
 
     // Match all ANSI escape sequences
     static QRegularExpression ansiPattern("\\x1b\\[([0-9;?]*)([a-zA-Z])");
@@ -86,34 +86,6 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
 
         QString textSegment = view.mid(lastPosition, match.capturedStart() - lastPosition).toString();
         htmlText += textSegment;
-
-        if (command == "m") {
-            QStringList codeList = parameters.split(';');
-            bool reset = false;
-
-            for (const QString& code : codeList) {
-                int num = code.toInt();
-                if (num == 0) { // Reset all formatting
-                    reset = true;
-                } else if (num == 1) {
-                    currentStyle += "font-weight:bold;";
-                } else if (colorMap.contains(num)) {
-                    currentStyle += "color:" + colorMap[num] + ";";
-                }
-            }
-
-            if (reset) {
-                while (!openTags.isEmpty()) {
-                    htmlText += openTags.takeLast();
-                }
-                currentStyle.clear();
-            }
-
-            if (!currentStyle.isEmpty()) {
-                htmlText += "<span style=\"" + currentStyle + "\">";
-                openTags.append("</span>");
-            }
-        }
 
         lastPosition = match.capturedEnd();
     }

@@ -11,6 +11,7 @@ Ptty::Ptty(QObject* parent)
     , m_readThread(nullptr)
 {
     // constructor
+    qDebug() << "Constructing Ptty...";
     setupPty();
 }
 
@@ -59,10 +60,12 @@ bool Ptty::pairMasterSlaveFd(){
 }
 
 bool Ptty::setupPty(){
+    qDebug() << "Pairing Master-Slave Pty...";
     if (pairMasterSlaveFd() < 0){
         perror("pairMasterSlaveFd");
         return false;
     }
+    qDebug() << "Spawning shell session...";
     if (spawnChildProcess() < 0){
         perror("spawnChildProcess");
         return false;
@@ -131,14 +134,8 @@ void Ptty::readLoop() {
 
             if (bytesRead > 0) {
                 resultBuffer[bytesRead] = '\0';
-                buffer += resultBuffer; 
-
-                size_t pos; 
-                while ((pos = buffer.find('\n')) != std::string::npos){
-                    std::string line = buffer.substr(0, pos+1);
-                    emit resultReceivedFromShell(QString::fromStdString(line));
-                    buffer.erase(0, pos+1);
-                }
+                emit resultReceivedFromShell(QString::fromStdString(resultBuffer));
+                
             } else if (bytesRead == -1 && errno != EAGAIN) {
                 perror("read");
             }
@@ -146,10 +143,6 @@ void Ptty::readLoop() {
             perror("select");
         }
         // If no data is available (rc == 0), loop continues without busy-waiting
-    }
-    
-    if (!buffer.empty()){
-        emit resultReceivedFromShell(QString::fromStdString(buffer));
     }
 }
 
