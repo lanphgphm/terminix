@@ -113,6 +113,8 @@ void Ptty::executeCommand(QString command){
 
 // ----- new: this is an event-based read loop -----------
 void Ptty::readLoop() {
+    std::string buffer; 
+    
     while (!m_stop) {
         fd_set readFds;
         FD_ZERO(&readFds);
@@ -127,7 +129,7 @@ void Ptty::readLoop() {
 
         if (rc > 0 && FD_ISSET(m_masterFd, &readFds)) {
             std::lock_guard<std::mutex> lock(m_writeMutex);
-            ssize_t bytesRead = read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE - 1);
+            ssize_t bytesRead = ::read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE - 1);
 
             if (bytesRead > 0) {
                 resultBuffer[bytesRead] = '\0';

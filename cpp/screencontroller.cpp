@@ -66,14 +66,13 @@ QString ScreenController::processPrompt(const QString& ansiText){
     return filteredAnsiText;
 }
 
+// nutshell does not use ansi coding,  
+// but it's also not necessary to rename the function :) 
 QString ScreenController::ansiToHtml(const QString& ansiText) {
     QString htmlText = "<pre>"; // Preserve whitespace
     QString filteredAnsiText = ansiText;
     filteredAnsiText = processPrompt(ansiText);
 
-
-    // Match all ANSI escape sequences
-    static QRegularExpression ansiPattern("\\x1b\\[([0-9;?]*)([a-zA-Z])");
     QRegularExpressionMatchIterator i = ansiPattern.globalMatch(filteredAnsiText);
     int lastPosition = 0;
     QStringView view(filteredAnsiText);
@@ -86,37 +85,8 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
         QString parameters = match.captured(1);
         QString command = match.captured(2);
 
-        QString textSegment = view.mid(lastPosition, match.capturedStart() - lastPosition).toString();
+        QString textSegment = view.mid(lastPosition, match.capturedStart() - lastPosition).toString().trimmed();
         htmlText += textSegment;
-
-        if (command == "m") {
-            QStringList codeList = parameters.split(';');
-            bool reset = false;
-
-            for (const QString& code : codeList) {
-                int num = code.toInt();
-                if (num == 0) { // Reset all formatting
-                    reset = true;
-                } else if (num == 1) {
-                    currentStyle += "font-weight:bold;";
-                } else if (colorMap.contains(num)) {
-                    currentStyle += "color:" + colorMap[num] + ";";
-                }
-            }
-
-            if (reset) {
-                while (!openTags.isEmpty()) {
-                    htmlText += openTags.takeLast();
-                }
-                currentStyle.clear();
-            }
-
-            if (!currentStyle.isEmpty()) {
-                htmlText += "<span style=\"" + currentStyle + "\">";
-                openTags.append("</span>");
-            }
-        }
-
         lastPosition = match.capturedEnd();
     }
 

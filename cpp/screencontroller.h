@@ -37,6 +37,7 @@ public slots:
 
 private:
     Ptty* m_ptty;
+    QString resultBuffer; 
     QMap<Qt::Key, int> keySignalMap = {
         {Qt::Key_C, SIGINT},
         {Qt::Key_Z, SIGTSTP}
@@ -52,10 +53,6 @@ private:
         {36, "#b294bb"}, // cyan
         {37, "#d5d5d5"} // white
     };
-
-    bool isRoot = false;
-    QStringList m_commandHistory;
-    int m_historyIndex;
 
     QString processPrompt(const QString& ansiText);
 };
