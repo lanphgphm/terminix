@@ -7,6 +7,7 @@ Rectangle {
     id: screenView
 
     // 1 controller instance per 1 view instance
+    property int defheight: 25
     property ScreenController screenController: ScreenController{}
     property bool isEnteringPassword
     signal sessionEnded()
@@ -46,8 +47,8 @@ Rectangle {
             let newContent = listModel.get(0).content + result;
             listModel.setProperty(0, "content", newContent);
 
-            if (!listView.userScrolled)
-                listView.positionViewAtEnd(); // autoscroll down
+            listView.forceLayout(); 
+            listView.positionViewAtEnd(); // autoscroll down
         }
 
         function onTerminalSessionEnded() {
@@ -60,6 +61,13 @@ Rectangle {
         }
     }
 
+    Connections {
+        target: screenView
+        function onSessionEnded(){
+            Qt.quit()
+        } 
+    }
+
     ListView {
         id: listView
         model: listModel
@@ -69,25 +77,9 @@ Rectangle {
         height: parent.height
         currentIndex: 1
 
-        property bool userScrolled: false
-        onContentYChanged: {
-            if (Math.abs(contentHeight - height - contentY) < 2) {
-                // User is at the bottom, allow autoscroll
-                listView.userScrolled = false;
-            }
-        }
-
-        ScrollBar.vertical: ScrollBar {
-            onActiveChanged: {
-                if (active) {
-                    listView.userScrolled = true;
-                }
-            }
-        }
-
         delegate: Item {
             width: parent? parent.width : 0
-            height: model.type === "outputText" ? outputArea.height : 30
+            height: model.type === "outputText" ? outputArea.height : defheight
 
             TextEdit {
                 id: outputArea
@@ -110,9 +102,10 @@ Rectangle {
                 id: inputArea
 
                 readOnly: false
+                focus: true
                 visible: model.type === "inputText"
                 width: parent ? parent.width : 0
-                height: contentHeight > 30 ? contentHeight : 30
+                height: contentHeight > defheight ? contentHeight : defheight
 
                 font.family: "monospace"
                 font.pointSize: 13
@@ -123,7 +116,10 @@ Rectangle {
                 text: model.content
                 wrapMode: TextInput.Wrap
 
-                // TODO 1.5: Tab-complete input
+                Component.onCompleted: {
+                    inputArea.forceActiveFocus(); 
+                }
+
                 Keys.onPressed: (event) => { //   --------------bitmask----------------
                     if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
                         screenController.handleControlKeyPress(Qt.Key_C);
@@ -144,18 +140,6 @@ Rectangle {
                     }
                     else if (event.key === Qt.Key_Z && (event.modifiers & Qt.ControlModifier)) {
                         screenController.handleControlKeyPress(Qt.Key_Z);
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Backslash && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_Backslash);
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_S);
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Q && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_Q);
                         event.accepted = true;
                     }
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {

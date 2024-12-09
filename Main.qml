@@ -12,9 +12,7 @@ ApplicationWindow {
     visible: true
     visibility: Window.Windowed
 
-    // menuBar: TopMenuBar {}
-
-    SplitScreenView {
+    ScreenView {
         id: rootSplitScreen
 
         anchors.fill: parent
@@ -23,8 +21,5 @@ ApplicationWindow {
     ShortcutsCollection {
         appId: app
         rootScreenId: rootSplitScreen
-
-        // contains Ctrl+Shift+E for vertical splitting
-        // contains Ctrl+Shift+O for horizontal splitting
     }
 }

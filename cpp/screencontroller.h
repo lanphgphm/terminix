@@ -44,10 +44,7 @@ private:
     Ptty* m_ptty;
     QMap<Qt::Key, int> keySignalMap = {
         {Qt::Key_C, SIGINT},
-        {Qt::Key_Z, SIGTSTP},
-        {Qt::Key_Backslash, SIGQUIT},
-        {Qt::Key_S, SIGSTOP},
-        {Qt::Key_Q, SIGCONT},
+        {Qt::Key_Z, SIGTSTP}
     };
 
     QMap<int, QString> colorMap = {

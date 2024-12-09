@@ -181,7 +181,6 @@ void Ptty::sendSignal(int signal){
         return;
     }
 
-    // dynamically get current foreground process
     pid_t fgPid = tcgetpgrp(m_masterFd);
     if (fgPid == -1){
         perror("tcgetpgrp");
@@ -191,8 +190,7 @@ void Ptty::sendSignal(int signal){
     int sendSignalResult = killpg(fgPid, signal);
 
     if (sendSignalResult == -1){
-        // TODO 1.7: cannot send signals as root?
-        perror("Failed to send signal");
+        perror("killpg");
     }
     else {
         qDebug("Signal sent successfully.");
