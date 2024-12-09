@@ -81,39 +81,67 @@ void Ptty::executeCommand(QString command){
         if (written < 0) {
             perror("write(masterFd)");
         } else if (written < cmd.size()) {
-            // CONCERN 1.0
-            // in case the entire command cant be written at once
             qDebug("Warning: Not all bytes were written to the terminal.");
         }
     }
     // mutex lock auto release when out of scope (behavior of std::lock_guard)
 }
 
-void Ptty::readLoop(){
-    while(!m_stop){
-        ssize_t count = ::read(m_masterFd, resultBuffer, BUFFER_SIZE-1);
-        if (count > 0) {
-            // ---TODO 1.6: buffer the readBuffer to capture full output----
-            // but the output does not have a endOfResult mark character?
-            // -------------------------------------------------------------
-            resultBuffer[count] = '\0';
-            emit resultReceivedFromBash(resultBuffer);
+// ----- old: this is a busy-wait loop to read input -----
+// ----- can eliminate busy-wait with a chrono::sleep ----
+// ----- but this messes up the output of real-time ------
+// ----- programs like "pstree" or "journalctl" ----------
+// void Ptty::readLoop(){
+//     while(!m_stop){
+//         ssize_t bytesRead = ::read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE-1);
+//         if (bytesRead > 0) {
+//             resultBuffer[bytesRead] = '\0';
+//             emit resultReceivedFromShell(resultBuffer);
+//         }
+//         else if (bytesRead < 0) {
+//             break;
+//         }
+//         else{
+//             // bytesRead == 0 means child process has closed PTY for some reasons
+//             perror("PTY closed by child process");
+//             break;
+//         }
+//     }
+//     emit resultReceivedFromShell("Process has exited\n");
+// }
+// -------------------------------------------------------
+
+// ----- new: this is an event-based read loop -----------
+void Ptty::readLoop() {
+    while (!m_stop) {
+        fd_set readFds;
+        FD_ZERO(&readFds);
+        FD_SET(m_masterFd, &readFds);
+
+        // Use select to wait for data on m_masterFd
+        struct timeval timeout;
+        timeout.tv_sec = 0;         // Seconds
+        timeout.tv_usec = 10000;    // Microseconds (10ms)
+
+        int rc = select(m_masterFd + 1, &readFds, nullptr, nullptr, &timeout);
+
+        if (rc > 0 && FD_ISSET(m_masterFd, &readFds)) {
+            std::lock_guard<std::mutex> lock(m_writeMutex);
+            ssize_t bytesRead = read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE - 1);
+
+            if (bytesRead > 0) {
+                resultBuffer[bytesRead] = '\0';
+                emit resultReceivedFromShell(QString::fromUtf8(resultBuffer));
+            } else if (bytesRead == -1 && errno != EAGAIN) {
+                perror("read");
+            }
+        } else if (rc == -1) {
+            perror("select");
         }
-        else if (count < 0) {
-            // go inform ScreenController::resultReceivedFromPty()
-            // to close session and hide terminal window
-            break;
-        }
-        else{
-            // CONCERN 1.1
-            // count == 0 means child process has closed PTY for some reasons
-            perror("PTY closed by child process");
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+        // If no data is available (rc == 0), loop continues without busy-waiting
     }
-    emit resultReceivedFromBash("Process has exited\n");
 }
+
 
 void Ptty::start(){
     m_stop = false;
@@ -161,15 +189,11 @@ bool Ptty::spawnChildProcess(){
     }
     ::setpgid(0, 0);
 
-    // spawning bash session
-    // char* const argv[] = {(char*)"bash", nullptr}; 
-    // execve(BASH, argv, environ);
-   
     const char* nutshellPath = "/home/lanphgphm/Projects/terminix/cpp/appnutshell"; 
     char* const argv[] = {(char*)"appnutshell", nullptr}; 
     ::execve(nutshellPath, argv, environ);
 
-    // if got to here --> fail to exec bash
+    // if got to here --> fail to exec shell
     perror("execve");
     ::_exit(EXIT_FAILURE);
     return false;

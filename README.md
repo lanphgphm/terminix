@@ -1,7 +1,6 @@
 # ![AppIcon](./resources/icons/mint.png) Terminix 
-A terminal emulator for Linux and high POSIX-compatible operating systems. Written in QtQuick/QML 6.7 and C++. 
-
-![Preview](./resources/demo.png)
+A terminal emulator for Linux and high POSIX-compatible operating systems. Written in QtQuick/QML 6.7 and C++.
+Using a custom minimal shell: ![nutshell](https://github.com/lanphgphm/nutshell) 
 
 ## Features
 - `Ctrl+M` to toggle maximizing window 
@@ -12,8 +11,6 @@ A terminal emulator for Linux and high POSIX-compatible operating systems. Writt
 - Qt 6.7.1
 - CMake 3.29.3
 - GCC 14.1.1
-- Bash executable at `/usr/bin/bash`
-- Bash history at `~/.bash_history`
     
 ### Recommended:
 - QtCreator 13.0.1 based on Qt 6.7.1

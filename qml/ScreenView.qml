@@ -126,14 +126,6 @@ Rectangle {
                         inputArea.text = "";
                         event.accepted = true;
                     }
-                    else if (event.key === Qt.Key_Up) {
-                        screenController.commandHistoryUp();
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Down) {
-                        screenController.commandHistoryDown();
-                        event.accepted = true;
-                    }
                     else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
                         clearScreen();
                         event.accepted = true;
@@ -144,7 +136,6 @@ Rectangle {
                     }
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         screenController.commandReceivedFromView(text);
-                        if (!screenView.isEnteringPassword) screenController.logCommand(text);
                         text = "";
                         if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
                         event.accepted = true;
