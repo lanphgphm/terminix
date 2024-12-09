@@ -114,7 +114,7 @@ void Ptty::executeCommand(QString command){
 // ----- new: this is an event-based read loop -----------
 void Ptty::readLoop() {
     std::string buffer; 
-    
+
     while (!m_stop) {
         fd_set readFds;
         FD_ZERO(&readFds);
@@ -133,7 +133,14 @@ void Ptty::readLoop() {
 
             if (bytesRead > 0) {
                 resultBuffer[bytesRead] = '\0';
-                emit resultReceivedFromShell(QString::fromUtf8(resultBuffer));
+                buffer += resultBuffer; 
+
+                size_t pos; 
+                while ((pos = buffer.find('\n')) != std::string::npos){
+                    std::string line = buffer.substr(0, pos+1);
+                    emit resultReceivedFromShell(QString::fromStdString(line));
+                    buffer.erase(0, pos+1);
+                }
             } else if (bytesRead == -1 && errno != EAGAIN) {
                 perror("read");
             }
@@ -141,6 +148,10 @@ void Ptty::readLoop() {
             perror("select");
         }
         // If no data is available (rc == 0), loop continues without busy-waiting
+    }
+    
+    if (!buffer.empty()){
+        emit resultReceivedFromShell(QString::fromStdString(buffer));
     }
 }
 

@@ -5,7 +5,6 @@
 ScreenController::ScreenController(QObject* parent)
     : QObject(parent)
     , m_ptty(new Ptty(this))
-    , m_historyIndex(0)
 {
     // constructor
     m_ptty->start();
@@ -73,6 +72,8 @@ QString ScreenController::ansiToHtml(const QString& ansiText) {
     QString filteredAnsiText = ansiText;
     filteredAnsiText = processPrompt(ansiText);
 
+    // Match all ANSI escape sequences
+    static QRegularExpression ansiPattern("\\x1b\\[([0-9;?]*)([a-zA-Z])");
     QRegularExpressionMatchIterator i = ansiPattern.globalMatch(filteredAnsiText);
     int lastPosition = 0;
     QStringView view(filteredAnsiText);
