@@ -162,12 +162,9 @@ bool Ptty::spawnChildProcess(){
     ::setpgid(0, 0);
 
     // spawning bash session
-    // char* const argv[] = {(char*)"bash", nullptr}; 
-    // execve(BASH, argv, environ);
-   
-    const char* nutshellPath = "/home/lanphgphm/Projects/terminix/cpp/demo"; 
-    char* const argv[] = {(char*)"demo", nullptr}; 
-    ::execve(nutshellPath, argv, environ);
+    char* const argv[] = {(char*)"bash", nullptr}; 
+    execve(BASH, argv, environ);
+
 
     // if got to here --> fail to exec bash
     perror("execve");
