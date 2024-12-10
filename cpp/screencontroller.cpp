@@ -61,6 +61,7 @@ QString ScreenController::processPrompt(const QString& ansiText){
                                      "<span style=\"color:#cd7db7;\"><b>"
                                          + promptMatch.captured(0).toHtmlEscaped()
                                          + "</b></span>");
+
     }
 
     return filteredAnsiText;

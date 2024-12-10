@@ -44,17 +44,13 @@ Rectangle {
             let newContent = listModel.get(0).content + result;
             listModel.setProperty(0, "content", newContent);
 
-            listView.forceLayout(); 
-            listView.positionViewAtEnd(); // autoscroll down
+            // listView.forceLayout(); 
+            // listView.positionViewAtEnd(); // autoscroll down
         }
 
         function onTerminalSessionEnded() {
             screenView.visible = false;
             sessionEnded();
-        }
-
-        function onShowCommand(command) {
-            listView.currentItem.setCommand(command);
         }
     }
 
@@ -72,78 +68,102 @@ Rectangle {
         anchors.fill: parent
         width: parent ? parent.width : 0
         height: parent.height
-        currentIndex: 1
+        Keys.onUpPressed: ybar.decrease()
+        Keys.onDownPressed: ybar.increase()
+
+        ScrollBar.vertical: ScrollBar {
+            id: ybar
+
+            hoverEnabled: true 
+            active: hovered || pressed
+            orientation: Qt.Vertical
+            policy: ScrollBar.AlwaysOn
+            stepSize: 0.5
+
+            anchors.top: parent.top 
+            anchors.right: parent.right 
+            anchors.bottom: parent.bottom 
+        }
 
         delegate: Item {
             width: parent? parent.width : 0
             height: model.type === "outputText" ? outputArea.height : defheight
 
-            TextEdit {
-                id: outputArea
+            Flickable {
+                id: flick
 
-                readOnly: true
-                visible: model.type === "outputText"
                 width: parent ? parent.width : 0
-                height: outputArea.contentHeight
+                height: parent.height
+                contentWidth: inputArea.contentWidth
+                contentHeight: inputArea.contentHeight
+                clip: true
 
-                font.family: "monospace"
-                font.pointSize: 12
-                color: "#d5d5d5"
+                TextEdit {
+                        id: outputArea
 
-                wrapMode: TextEdit.Wrap
-                textFormat: TextEdit.RichText
-                text: model.content
-            }
+                        readOnly: true
+                        visible: model.type === "outputText"
+                        width: parent ? parent.width : 0
+                        height: outputArea.contentHeight
+                        focus: true 
+                        cursorVisible: true
 
-            TextInput {
-                id: inputArea
+                        font.family: "monospace"
+                        font.pointSize: 12
+                        color: "#d5d5d5"
 
-                readOnly: false
-                focus: true
-                visible: model.type === "inputText"
-                width: parent ? parent.width : 0
-                height: contentHeight > defheight ? contentHeight : defheight
+                        wrapMode: TextEdit.Wrap
+                        textFormat: TextEdit.RichText
+                        text: model.content
+                    }
 
-                font.family: "monospace"
-                font.pointSize: 13
-                font.bold: true
-                color: "#88d22f"
+                TextInput {
+                    id: inputArea
 
-                echoMode: screenView.isEnteringPassword ? TextInput.Password : TextInput.Normal
-                text: model.content
-                wrapMode: TextInput.Wrap
+                    readOnly: false
+                    visible: model.type === "inputText"
+                    width: listView.width
+                    height: contentHeight > defheight ? contentHeight : defheight
 
-                Component.onCompleted: {
-                    inputArea.forceActiveFocus(); 
+                    font.family: "monospace"
+                    font.pointSize: 13
+                    font.bold: true
+                    color: "#88d22f"
+
+                    echoMode: screenView.isEnteringPassword ? TextInput.Password : TextInput.Normal
+                    text: model.content
+                    wrapMode: TextInput.Wrap
+                    cursorVisible: true
+                    autoScroll: true
+                    // onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
+
+                    Component.onCompleted: {
+                        inputArea.forceActiveFocus(); 
+                    }
+
+                    Keys.onPressed: (event) => { //   --------------bitmask----------------
+                        if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
+                            screenController.handleControlKeyPress(Qt.Key_C);
+                            inputArea.text = "";
+                            event.accepted = true;
+                        }
+                        else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
+                            clearScreen();
+                            event.accepted = true;
+                        }
+                        else if (event.key === Qt.Key_Z && (event.modifiers & Qt.ControlModifier)) {
+                            screenController.handleControlKeyPress(Qt.Key_Z);
+                            event.accepted = true;
+                        }
+                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            screenController.commandReceivedFromView(text);
+                            text = "";
+                            if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
+                            event.accepted = true;
+                        }
+                    }
                 }
-
-                Keys.onPressed: (event) => { //   --------------bitmask----------------
-                    if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_C);
-                        inputArea.text = "";
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
-                        clearScreen();
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Z && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_Z);
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        screenController.commandReceivedFromView(text);
-                        text = "";
-                        if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
-                        event.accepted = true;
-                    }
-                }
-            }
-
-            function setCommand(command) {
-                inputArea.text = command;
             }
         }
     }
 }
-

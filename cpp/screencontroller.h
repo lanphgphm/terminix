@@ -28,7 +28,6 @@ signals:
     void resultReadySendToView(QString result);
     void commandReadySendToPty(QString command);
     void terminalSessionEnded();
-    void showCommand(QString command);
 
 public slots:
     Q_INVOKABLE void commandReceivedFromView(QString command);

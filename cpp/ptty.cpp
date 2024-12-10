@@ -94,57 +94,57 @@ void Ptty::executeCommand(QString command){
 // ----- can eliminate busy-wait with a chrono::sleep ----
 // ----- but this messes up the output of real-time ------
 // ----- programs like "pstree" or "journalctl" ----------
-// void Ptty::readLoop(){
-//     while(!m_stop){
-//         ssize_t bytesRead = ::read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE-1);
-//         if (bytesRead > 0) {
-//             resultBuffer[bytesRead] = '\0';
-//             emit resultReceivedFromShell(resultBuffer);
-//         }
-//         else if (bytesRead < 0) {
-//             break;
-//         }
-//         else{
-//             // bytesRead == 0 means child process has closed PTY for some reasons
-//             perror("PTY closed by child process");
-//             break;
-//         }
-//     }
-//     emit resultReceivedFromShell("Process has exited\n");
-// }
+void Ptty::readLoop(){
+    while(!m_stop){
+        ssize_t bytesRead = ::read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE-1);
+        if (bytesRead > 0) {
+            resultBuffer[bytesRead] = '\0';
+            emit resultReceivedFromShell(resultBuffer);
+        }
+        else if (bytesRead < 0) {
+            break;
+        }
+        else{
+            // bytesRead == 0 means child process has closed PTY for some reasons
+            perror("PTY closed by child process");
+            break;
+        }
+    }
+    emit resultReceivedFromShell("Process has exited\n");
+}
 // -------------------------------------------------------
 
 // ----- new: this is an event-based read loop -----------
-void Ptty::readLoop() {
-    while (!m_stop) {
-        fd_set readFds;
-        FD_ZERO(&readFds);
-        FD_SET(m_masterFd, &readFds);
+// void Ptty::readLoop() {
+//     while (!m_stop) {
+//         fd_set readFds;
+//         FD_ZERO(&readFds);
+//         FD_SET(m_masterFd, &readFds);
 
-        // Use select to wait for data on m_masterFd
-        struct timeval timeout;
-        timeout.tv_sec = 0;         // Seconds
-        timeout.tv_usec = 10000;    // Microseconds (10ms)
+//         // Use select to wait for data on m_masterFd
+//         struct timeval timeout;
+//         timeout.tv_sec = 0;         // Seconds
+//         timeout.tv_usec = 10000;    // Microseconds (10ms)
 
-        int rc = select(m_masterFd + 1, &readFds, nullptr, nullptr, &timeout);
+//         int rc = select(m_masterFd + 1, &readFds, nullptr, nullptr, &timeout);
 
-        if (rc > 0 && FD_ISSET(m_masterFd, &readFds)) {
-            std::lock_guard<std::mutex> lock(m_writeMutex);
-            ssize_t bytesRead = read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE - 1);
+//         if (rc > 0 && FD_ISSET(m_masterFd, &readFds)) {
+//             std::lock_guard<std::mutex> lock(m_writeMutex);
+//             ssize_t bytesRead = read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE - 1);
 
-            if (bytesRead > 0) {
-                resultBuffer[bytesRead] = '\0';
-                emit resultReceivedFromShell(QString::fromStdString(resultBuffer));
+//             if (bytesRead > 0) {
+//                 resultBuffer[bytesRead] = '\0';
+//                 emit resultReceivedFromShell(QString::fromStdString(resultBuffer));
                 
-            } else if (bytesRead == -1 && errno != EAGAIN) {
-                perror("read");
-            }
-        } else if (rc == -1) {
-            perror("select");
-        }
-        // If no data is available (rc == 0), loop continues without busy-waiting
-    }
-}
+//             } else if (bytesRead == -1 && errno != EAGAIN) {
+//                 perror("read");
+//             }
+//         } else if (rc == -1) {
+//             perror("select");
+//         }
+//         // If no data is available (rc == 0), loop continues without busy-waiting
+//     }
+// }
 
 
 void Ptty::start(){
