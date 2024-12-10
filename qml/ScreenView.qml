@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.5
 Rectangle {
     id: screenView
 
-    property int defheight: 25
+    property int defheight: 35
     property bool isEnteringPassword
     signal sessionEnded()
 
@@ -88,69 +88,61 @@ Rectangle {
             width: parent? parent.width : 0
             height: model.type === "outputText" ? outputArea.height : defheight
 
-            Flickable {
-                id: flick
+            TextEdit {
+                id: outputArea
 
-                width: parent ? parent.width : 0
-                height: parent.height
-                contentWidth: inputArea.contentWidth
-                contentHeight: inputArea.contentHeight
-                clip: true
+                readOnly: true
+                visible: model.type === "outputText"
+                width: screenView.width - 16 // outputArea.contentWidth
+                height: outputArea.contentHeight
+                padding: 8
 
-                TextEdit {
-                    id: outputArea
+                font.family: "monospace"
+                font.pointSize: 12
+                color: "#d5d5d5"
 
-                    readOnly: true
-                    visible: model.type === "outputText"
-                    width: parent ? parent.width : 0
-                    height: outputArea.contentHeight
-                    focus: true 
-                    cursorVisible: true
+                focus: true 
+                cursorVisible: true
+                wrapMode: TextEdit.WordWrap // NoWrap or WordWrap
+                textFormat: TextEdit.RichText
+                text: model.content
+            }
 
-                    font.family: "monospace"
-                    font.pointSize: 12
-                    color: "#d5d5d5"
+            TextInput {
+                id: inputArea
 
-                    wrapMode: TextEdit.Wrap
-                    textFormat: TextEdit.RichText
-                    text: model.content
+                readOnly: false
+                visible: model.type === "inputText"
+                width: listView.width - 16
+                height: contentHeight > defheight ? contentHeight : defheight
+                padding: 8
+
+                font.family: "monospace"
+                font.pointSize: 13
+                font.bold: true
+                color: "#88d22f"
+
+                echoMode: screenView.isEnteringPassword ? TextInput.Password : TextInput.Normal
+                text: model.content
+                wrapMode: TextInput.Wrap
+                cursorVisible: true
+                autoScroll: true
+
+                Component.onCompleted: {
+                    inputArea.forceActiveFocus(); 
                 }
 
-                TextInput {
-                    id: inputArea
-
-                    readOnly: false
-                    visible: model.type === "inputText"
-                    width: listView.width
-                    height: contentHeight > defheight ? contentHeight : defheight
-
-                    font.family: "monospace"
-                    font.pointSize: 13
-                    font.bold: true
-                    color: "#88d22f"
-
-                    echoMode: screenView.isEnteringPassword ? TextInput.Password : TextInput.Normal
-                    text: model.content
-                    wrapMode: TextInput.Wrap
-                    cursorVisible: true
-                    autoScroll: true
-
-                    Component.onCompleted: {
-                        inputArea.forceActiveFocus(); 
+                Keys.onPressed: (event) => { 
+                    if (event.modifiers & Qt.ControlModifier) {
+                        screenController.handleControlKeyPress(event.key);
+                        inputArea.text = "";
+                        event.accepted = true;
                     }
-
-                    Keys.onPressed: (event) => { 
-                        if (event.modifiers & Qt.ControlModifier) {
-                            screenController.handleControlKeyPress(event.key);
-                            inputArea.text = "";
-                            event.accepted = true;
-                        }
-                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            screenController.commandReceivedFromView(text);
-                            inputArea.text = "";
-                            if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
-                            event.accepted = true;
-                        }
+                    else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        screenController.commandReceivedFromView(text);
+                        inputArea.text = "";
+                        if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
+                        event.accepted = true;
                     }
                 }
             }
