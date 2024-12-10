@@ -23,6 +23,7 @@
 #include <thread> // thread, this_thread, detach, joinable, join, sleep_for
 #include <sys/types.h>
 #include <sys/wait.h> // waitpid
+#include <libgen.h>  // dirname
 
 #include <mutex> // lock_guard, mutex,lock
 #include <signal.h> // killpg
@@ -61,6 +62,7 @@ private:
     bool setupPty();
     bool pairMasterSlaveFd();
     bool spawnChildProcess();
+    char* getShellPath(const char* relativePath); 
 };
 
 #endif // PTTY_H

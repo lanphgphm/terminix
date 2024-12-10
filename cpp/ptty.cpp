@@ -135,9 +135,21 @@ void Ptty::readLoop() {
             if (bytesRead > 0) {
                 resultBuffer[bytesRead] = '\0';
                 emit resultReceivedFromShell(QString::fromStdString(resultBuffer));
-                
-            } else if (bytesRead == -1 && errno != EAGAIN) {
-                perror("read");
+            } 
+            else if (bytesRead == 0) {
+                emit resultReceivedFromShell("Process has exited\n");
+                break;
+            }
+            else {
+                if (errno == EIO) {
+                    // PTY is closed; exit the loop
+                    emit resultReceivedFromShell("PTY has been closed by child process\n");
+                    break;
+                } else if (errno != EAGAIN) {
+                    // Log other errors and break
+                    perror("read");
+                    break;
+                }
             }
         } else if (rc == -1) {
             perror("select");
@@ -194,7 +206,8 @@ bool Ptty::spawnChildProcess(){
     }
     ::setpgid(0, 0);
 
-    const char* nutshellPath = "/home/lanphgphm/Projects/terminix/cpp/appnutshell"; 
+    // const char* nutshellPath = getShellPath("appnutshell"); 
+    const char* nutshellPath = "/home/lanphgphm/Projects/terminix/shell/appnutshell";
     char* const argv[] = {(char*)"appnutshell", nullptr}; 
     ::execve(nutshellPath, argv, environ);
 
@@ -203,6 +216,32 @@ bool Ptty::spawnChildProcess(){
     ::_exit(EXIT_FAILURE);
     return false;
 }
+
+char* Ptty::getShellPath(const char* relativePath) { // function not working
+    char exePath[1024];
+    ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
+    if (len == -1) {
+        perror("readlink(/proc/self/exe)"); 
+        return NULL;
+    }
+    exePath[len] = '\0';  
+
+    char *dir = dirname(exePath); 
+
+    // Allocate memory for the full path
+    size_t resolvedPathLen = strlen(dir) + strlen(relativePath) + 2; // +2 for '/' and '\0'
+    char *resolvedPath = (char*) malloc(resolvedPathLen);
+    if (!resolvedPath) {
+        perror("Memory allocation failed");
+        return NULL;
+    }
+
+    // directory + relative = full path
+    snprintf(resolvedPath, resolvedPathLen, "%s/%s", dir, relativePath);
+
+    return resolvedPath;
+}
+
 
 void Ptty::sendSignal(int signal){
     if (m_masterFd <= 0){
