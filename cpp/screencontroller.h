@@ -38,7 +38,10 @@ private:
     Ptty* m_ptty;
     QMap<Qt::Key, int> keySignalMap = {
         {Qt::Key_C, SIGINT},
-        {Qt::Key_Z, SIGTSTP}
+        {Qt::Key_Z, SIGTSTP}, 
+        {Qt::Key_Backslash, SIGQUIT},
+        {Qt::Key_S, SIGSTOP},
+        {Qt::Key_Q, SIGCONT},
     };
 
     QMap<int, QString> colorMap = {
@@ -51,10 +54,6 @@ private:
         {36, "#b294bb"}, // cyan
         {37, "#d5d5d5"} // white
     };
-
-    bool isRoot = false;
-    QStringList m_commandHistory;
-    int m_historyIndex;
 
     QString processPrompt(const QString& ansiText);
 };

@@ -40,7 +40,6 @@ Rectangle {
             }
             else screenView.isEnteringPassword = false;
             // ---------------------------------------------------------------------------
-
             let newContent = listModel.get(0).content + result;
             listModel.setProperty(0, "content", newContent);
 
@@ -99,23 +98,23 @@ Rectangle {
                 clip: true
 
                 TextEdit {
-                        id: outputArea
+                    id: outputArea
 
-                        readOnly: true
-                        visible: model.type === "outputText"
-                        width: parent ? parent.width : 0
-                        height: outputArea.contentHeight
-                        focus: true 
-                        cursorVisible: true
+                    readOnly: true
+                    visible: model.type === "outputText"
+                    width: parent ? parent.width : 0
+                    height: outputArea.contentHeight
+                    focus: true 
+                    cursorVisible: true
 
-                        font.family: "monospace"
-                        font.pointSize: 12
-                        color: "#d5d5d5"
+                    font.family: "monospace"
+                    font.pointSize: 12
+                    color: "#d5d5d5"
 
-                        wrapMode: TextEdit.Wrap
-                        textFormat: TextEdit.RichText
-                        text: model.content
-                    }
+                    wrapMode: TextEdit.Wrap
+                    textFormat: TextEdit.RichText
+                    text: model.content
+                }
 
                 TextInput {
                     id: inputArea
@@ -135,29 +134,20 @@ Rectangle {
                     wrapMode: TextInput.Wrap
                     cursorVisible: true
                     autoScroll: true
-                    // onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
 
                     Component.onCompleted: {
                         inputArea.forceActiveFocus(); 
                     }
 
-                    Keys.onPressed: (event) => { //   --------------bitmask----------------
-                        if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
-                            screenController.handleControlKeyPress(Qt.Key_C);
+                    Keys.onPressed: (event) => { 
+                        if (event.modifiers & Qt.ControlModifier) {
+                            screenController.handleControlKeyPress(event.key);
                             inputArea.text = "";
-                            event.accepted = true;
-                        }
-                        else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
-                            clearScreen();
-                            event.accepted = true;
-                        }
-                        else if (event.key === Qt.Key_Z && (event.modifiers & Qt.ControlModifier)) {
-                            screenController.handleControlKeyPress(Qt.Key_Z);
                             event.accepted = true;
                         }
                         else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             screenController.commandReceivedFromView(text);
-                            text = "";
+                            inputArea.text = "";
                             if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
                             event.accepted = true;
                         }

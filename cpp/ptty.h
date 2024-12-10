@@ -21,6 +21,8 @@
 #include <sys/select.h> // select 
 #include <fcntl.h> // posix_openpt
 #include <thread> // thread, this_thread, detach, joinable, join, sleep_for
+#include <sys/types.h>
+#include <sys/wait.h> // waitpid
 
 #include <mutex> // lock_guard, mutex,lock
 #include <signal.h> // killpg
