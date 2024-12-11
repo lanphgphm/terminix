@@ -5,6 +5,7 @@ project(terminix VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Quick)
+add_definitions(-DPROJECT_ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
 qt_standard_project_setup()
 

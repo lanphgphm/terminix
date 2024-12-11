@@ -202,10 +202,6 @@ bool Ptty::spawnChildProcess(){
         return false;
     }
 
-    if(::setpgid(0, 0) == -1){
-        qDebug() << "setpgid failed"; 
-    }
-
     // set slave side of pty as stdin, stdout, stderr
     if (::dup2(m_slaveFd, STDIN_FILENO) == -1 ||
         ::dup2(m_slaveFd, STDOUT_FILENO) == -1 ||
@@ -215,48 +211,38 @@ bool Ptty::spawnChildProcess(){
             return false;
         }
 
-    // setting child as the leader of its own group
-    if (ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
+    // setting child as controlling tty of itself 
+    // this allows the shell to handles signal on its own 
+    // without killing the parent too 
+    if (::ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
         perror("ioctl(TIOSCTTY)");
         ::_exit(EXIT_FAILURE);
         return false;
     }
 
-    // const char* nutshellPath = getShellPath("appnutshell"); 
-    const char* nutshellPath = "/home/lanphgphm/Projects/terminix/shell/appnutshell";
+    // getting shell path relative to root project dir
+    char* nutshellPath = getShellPath("shell/appnutshell"); 
     char* const argv[] = {(char*)"appnutshell", nullptr}; 
     ::execve(nutshellPath, argv, environ);
 
     // if got to here --> fail to exec shell
     perror("execve");
+    free(nutshellPath);
     ::_exit(EXIT_FAILURE);
     return false;
 }
 
 
-char* Ptty::getShellPath(const char* relativePath) { // function not working
-    char exePath[1024];
-    ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
-    if (len == -1) {
-        perror("readlink(/proc/self/exe)"); 
-        return NULL;
-    }
-    exePath[len] = '\0';  
-
-    char *dir = dirname(exePath); 
-
-    // Allocate memory for the full path
-    size_t resolvedPathLen = strlen(dir) + strlen(relativePath) + 2; // +2 for '/' and '\0'
-    char *resolvedPath = (char*) malloc(resolvedPathLen);
-    if (!resolvedPath) {
-        perror("Memory allocation failed");
-        return NULL;
+char* Ptty::getShellPath(const char* relativePath) { 
+    size_t totalLen = strlen(PROJECT_ROOT_DIR) + strlen(relativePath) + 2;  // +1 for '/' and +1 for '\0'
+    char* fullPath = (char*)malloc(totalLen);
+    if (!fullPath) {
+        perror("Memory allocation failed\n");
+        return nullptr;
     }
 
-    // directory + relative = full path
-    snprintf(resolvedPath, resolvedPathLen, "%s/%s", dir, relativePath);
-
-    return resolvedPath;
+    snprintf(fullPath, totalLen, "%s/%s", PROJECT_ROOT_DIR, relativePath);
+    return fullPath;  // free this when execve fails
 }
 
 
