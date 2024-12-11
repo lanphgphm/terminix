@@ -202,6 +202,15 @@ bool Ptty::spawnChildProcess(){
         return false;
     }
 
+    // setting child as controlling tty of itself 
+    // this allows the shell to handles signal on its own 
+    // without killing the parent too 
+    if (::ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
+        perror("ioctl(TIOSCTTY)");
+        ::_exit(EXIT_FAILURE);
+        return false;
+    }
+
     // set slave side of pty as stdin, stdout, stderr
     if (::dup2(m_slaveFd, STDIN_FILENO) == -1 ||
         ::dup2(m_slaveFd, STDOUT_FILENO) == -1 ||
@@ -211,14 +220,7 @@ bool Ptty::spawnChildProcess(){
             return false;
         }
 
-    // setting child as controlling tty of itself 
-    // this allows the shell to handles signal on its own 
-    // without killing the parent too 
-    if (::ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
-        perror("ioctl(TIOSCTTY)");
-        ::_exit(EXIT_FAILURE);
-        return false;
-    }
+    ::close(m_slaveFd);
 
     // getting shell path relative to root project dir
     char* nutshellPath = getShellPath("shell/appnutshell"); 
@@ -252,14 +254,14 @@ void Ptty::sendSignal(int signal){
         return;
     }
 
-    pid_t fgPid = tcgetpgrp(m_masterFd);
-    if (fgPid == -1){
+    pid_t shellPgid = tcgetpgrp(m_masterFd);
+    if (shellPgid == -1){
         perror("tcgetpgrp");
         return;
     }
 
-    qDebug() << "Sending signal " << signal << " to process group " << fgPid ;
-    int sendSignalResult = killpg(fgPid, signal);
+    qDebug() << "Sending signal " << signal << " to process group " << shellPgid ;
+    int sendSignalResult = killpg(shellPgid, signal);
 
     if (sendSignalResult == -1){
         perror("killpg");
