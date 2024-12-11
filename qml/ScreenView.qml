@@ -67,8 +67,7 @@ Rectangle {
         anchors.fill: parent
         width: parent ? parent.width : 0
         height: parent.height
-        Keys.onUpPressed: ybar.decrease()
-        Keys.onDownPressed: ybar.increase()
+        keyNavigationEnabled: false
 
         ScrollBar.vertical: ScrollBar {
             id: ybar
@@ -82,6 +81,13 @@ Rectangle {
             anchors.top: parent.top 
             anchors.right: parent.right 
             anchors.bottom: parent.bottom 
+        }
+
+        Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_End) {
+                listView.positionViewAtEnd(); 
+                event.accepted = true; 
+            }
         }
 
         delegate: Item {
@@ -137,6 +143,11 @@ Rectangle {
                         screenController.handleControlKeyPress(event.key);
                         inputArea.text = "";
                         event.accepted = true;
+                    }
+                    else if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                        // forward raw 
+                        let rawSequence = event.key === Qt.Key_Up ? "\u001B[A" : "\u001B[B";
+                        inputArea.text += rawSequence;
                     }
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         screenController.commandReceivedFromView(text);
