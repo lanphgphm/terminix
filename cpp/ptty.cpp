@@ -175,6 +175,7 @@ void Ptty::stop(){
     }
 }
 
+// ----- original
 bool Ptty::spawnChildProcess(){
     m_pid = fork();
     if (m_pid < 0) {
@@ -187,16 +188,32 @@ bool Ptty::spawnChildProcess(){
         return true;
     }
 
-    // setting child process as session leader
-    ::setsid();
-
     // child process, only need slaveFd
-    ::close(m_masterFd);
+    if (::close(m_masterFd) == -1){
+        perror("close(masterFd)");
+        ::_exit(EXIT_FAILURE);
+        return false;
+    }
+
+    // setting child process as session leader
+    if (::setsid() == -1){
+        perror("setsid"); 
+        ::_exit(EXIT_FAILURE);
+        return false;
+    }
+
+    if(::setpgid(0, 0) == -1){
+        qDebug() << "setpgid failed"; 
+    }
 
     // set slave side of pty as stdin, stdout, stderr
-    ::dup2(m_slaveFd, STDIN_FILENO);
-    ::dup2(m_slaveFd, STDOUT_FILENO);
-    ::dup2(m_slaveFd, STDERR_FILENO);
+    if (::dup2(m_slaveFd, STDIN_FILENO) == -1 ||
+        ::dup2(m_slaveFd, STDOUT_FILENO) == -1 ||
+        ::dup2(m_slaveFd, STDERR_FILENO) == -1){
+            perror("dup2"); 
+            ::_exit(EXIT_FAILURE);
+            return false;
+        }
 
     // setting child as the leader of its own group
     if (ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
@@ -204,7 +221,6 @@ bool Ptty::spawnChildProcess(){
         ::_exit(EXIT_FAILURE);
         return false;
     }
-    ::setpgid(0, 0);
 
     // const char* nutshellPath = getShellPath("appnutshell"); 
     const char* nutshellPath = "/home/lanphgphm/Projects/terminix/shell/appnutshell";
@@ -216,6 +232,7 @@ bool Ptty::spawnChildProcess(){
     ::_exit(EXIT_FAILURE);
     return false;
 }
+
 
 char* Ptty::getShellPath(const char* relativePath) { // function not working
     char exePath[1024];
