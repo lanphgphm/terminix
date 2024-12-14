@@ -10,11 +10,10 @@ ApplicationWindow {
     height: 600
     title: "Terminix"
     visible: true
-    visibility: Window.Windowed
+    visibility: Window.Maximized
 
     ScreenView {
         id: rootSplitScreen
-
         anchors.fill: parent
     }
 

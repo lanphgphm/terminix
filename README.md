@@ -1,6 +1,6 @@
 # ![AppIcon](./resources/icons/mint.png) Terminix 
 A terminal emulator for Linux and high POSIX-compatible operating systems. Written in QtQuick/QML 6.7 and C++.
-Using a custom minimal shell: ![nutshell](https://github.com/lanphgphm/nutshell) 
+Using a custom minimal shell: [nutshell](https://github.com/lanphgphm/nutshell) 
 
 ## Features
 - `Ctrl+M` to toggle maximizing window 
@@ -13,22 +13,21 @@ Using a custom minimal shell: ![nutshell](https://github.com/lanphgphm/nutshell)
 - GCC 14.1.1
     
 ### Recommended:
-- QtCreator 13.0.1 based on Qt 6.7.1
-- Visual Studio Code of any version for easy markdown editing and preview 
+- Visual Studio Code
 
 ### Build instructions: 
-1. Clone the repository
-2. Open the project in QtCreator or any IDE/text editor of choice 
-3. Create a `build` directory in the project root
-4. To build and run the project: 
-    
-    - `Ctrl+R` inside QtCreator, or 
-    - Open a terminal in the `build` directory and run 
-    ```
-    cmake .. && cmake --build . && ./appterminix
-    ```
+1. Clone the repository && `cd` into it
+```bash 
+git clone https://github.com/lanphgphm/terminix.git
+cd terminix 
+```
 
+2. Compile source code & run app
+On Linux:
+```bash 
+mkdir -p build 
+cd build
+cmake .. && cmake --build . && ./appterminix
+```
 ## User installation 
 This product is not ready to be shipped to end-users. Please refer to the developer setup section for building and running the application.
-
-User installation guide will be updated in due time :) 
