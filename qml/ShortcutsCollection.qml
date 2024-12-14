@@ -11,11 +11,11 @@ Item {
     Shortcut {
         sequence: "Ctrl+M"
         onActivated: {
-            if (appId.visibility !== Window.Windowed){
-                appId.visibility = Window.Windowed;
+            if (appId.visibility !== Window.Maximized){
+                appId.visibility = Window.Maximized;
             }
             else {
-                appId.visibility = Window.Maximized;
+                appId.visibility = Window.Windowed;
             }
         }
     }
