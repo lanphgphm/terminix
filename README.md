@@ -1,16 +1,9 @@
-# ![AppIcon](./resources/icons/small_butter.png) Terminix 
-A tiling terminal emulator for Linux and high POSIX-compatible operating systems. Written in QtQuick/QML 6.7 and C++. 
-
-See video of product preview: https://m.youtube.com/watch?v=0N2QZHG9Hjs 
-
-![Preview](./resources/demo.png)
+# ![AppIcon](./resources/icons/mint.png) Terminix 
+A terminal emulator for Linux and high POSIX-compatible operating systems. Written in QtQuick/QML 6.7 and C++.
+Using a custom minimal shell: ![nutshell](https://github.com/lanphgphm/nutshell) 
 
 ## Features
-- Open and tile multiple terminal instances in a single application window 
-    - `Ctrl+Shift+E` to spawn a new terminal vertically 
-    - `Ctrl+Shift+O` to spawn a new terminal horizontally
-    - `Ctrl+M` to toggle maximizing window 
-- Each terminal instance is resizable by dragging the splitter bar 
+- `Ctrl+M` to toggle maximizing window 
 - Muted dark theme with high contrast fonts and basic output coloring 
 
 ## Developer setup 
@@ -18,8 +11,6 @@ See video of product preview: https://m.youtube.com/watch?v=0N2QZHG9Hjs
 - Qt 6.7.1
 - CMake 3.29.3
 - GCC 14.1.1
-- Bash executable at `/usr/bin/bash`
-- Bash history at `~/.bash_history`
     
 ### Recommended:
 - QtCreator 13.0.1 based on Qt 6.7.1

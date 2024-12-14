@@ -19,14 +19,4 @@ Item {
             }
         }
     }
-
-    Shortcut {
-        sequence: "Ctrl+Shift+E" // split vertical
-        onActivated: rootScreenId.splitVertical()
-    }
-
-    Shortcut {
-        sequence:  "Ctrl+Shift+O" // split horizontal
-        onActivated: rootScreenId.splitHorizontal()
-    }
 }

@@ -5,6 +5,7 @@ project(terminix VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Quick)
+add_definitions(-DPROJECT_ROOT_DIR="${CMAKE_SOURCE_DIR}")
 
 qt_standard_project_setup()
 
@@ -20,9 +21,7 @@ qt_add_qml_module(appterminix
         QML_FILES qml/ScreenView.qml
         SOURCES cpp/screencontroller.h cpp/screencontroller.cpp
         SOURCES cpp/ptty.h cpp/ptty.cpp
-        QML_FILES qml/TopMenuBar.qml
         QML_FILES qml/ShortcutsCollection.qml
-        QML_FILES qml/SplitScreenView.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

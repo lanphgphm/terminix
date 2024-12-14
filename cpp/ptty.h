@@ -12,17 +12,18 @@
 #ifndef PTTY_H
 #define PTTY_H
 
-#define BASH "/usr/bin/bash"
-#define ZSH "/usr/bin/zsh"
-
 #include <unistd.h> // fork, read, write, exec, dup2, close, setsid, setpgid
 #include <cstring>  // strerror
 #include <cstdlib>  // environ
 #include <pty.h> // ioctl
 #include <stdlib.h> // exit
 #include <sys/types.h> // pid_t, ssize_t
+#include <sys/select.h> // select 
 #include <fcntl.h> // posix_openpt
 #include <thread> // thread, this_thread, detach, joinable, join, sleep_for
+#include <sys/types.h>
+#include <sys/wait.h> // waitpid
+#include <libgen.h>  // dirname
 
 #include <mutex> // lock_guard, mutex,lock
 #include <signal.h> // killpg
@@ -42,26 +43,26 @@ public:
     void sendSignal(int signal);
 
 signals:
-    void resultReceivedFromBash(QString result);
+    void resultReceivedFromShell(QString result);
 
 public slots:
     void executeCommand(QString command);
 
 private:
-    pid_t m_pid; // pid for bash session
+    pid_t m_pid; // pid for shell session
     int m_masterFd;
     int m_slaveFd;
     bool m_stop;
     std::thread *m_readThread;
     std::mutex m_writeMutex;
-    static const int BUFFER_SIZE = 4096;
-    char resultBuffer[BUFFER_SIZE];
-    int SLEEP_TIME = 50;
+    static const int OUTPUT_BUFFER_SIZE = 8192;
+    char resultBuffer[OUTPUT_BUFFER_SIZE];
 
     void readLoop();
     bool setupPty();
     bool pairMasterSlaveFd();
     bool spawnChildProcess();
+    char* getShellPath(const char* relativePath); 
 };
 
 #endif // PTTY_H

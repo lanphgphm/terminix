@@ -11,6 +11,7 @@ Ptty::Ptty(QObject* parent)
     , m_readThread(nullptr)
 {
     // constructor
+    qDebug() << "Constructing Ptty...";
     setupPty();
 }
 
@@ -59,10 +60,12 @@ bool Ptty::pairMasterSlaveFd(){
 }
 
 bool Ptty::setupPty(){
+    qDebug() << "Pairing Master-Slave Pty...";
     if (pairMasterSlaveFd() < 0){
         perror("pairMasterSlaveFd");
         return false;
     }
+    qDebug() << "Spawning shell session...";
     if (spawnChildProcess() < 0){
         perror("spawnChildProcess");
         return false;
@@ -81,39 +84,81 @@ void Ptty::executeCommand(QString command){
         if (written < 0) {
             perror("write(masterFd)");
         } else if (written < cmd.size()) {
-            // CONCERN 1.0
-            // in case the entire command cant be written at once
             qDebug("Warning: Not all bytes were written to the terminal.");
         }
     }
     // mutex lock auto release when out of scope (behavior of std::lock_guard)
 }
 
-void Ptty::readLoop(){
-    while(!m_stop){
-        ssize_t count = ::read(m_masterFd, resultBuffer, BUFFER_SIZE-1);
-        if (count > 0) {
-            // ---TODO 1.6: buffer the readBuffer to capture full output----
-            // but the output does not have a endOfResult mark character?
-            // -------------------------------------------------------------
-            resultBuffer[count] = '\0';
-            emit resultReceivedFromBash(resultBuffer);
+// ----- old: this is a busy-wait loop to read input -----
+// ----- can eliminate busy-wait with a chrono::sleep ----
+// ----- but this messes up the output of real-time ------
+// ----- programs like "pstree" or "journalctl" ----------
+// void Ptty::readLoop(){
+//     while(!m_stop){
+//         ssize_t bytesRead = ::read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE-1);
+//         if (bytesRead > 0) {
+//             resultBuffer[bytesRead] = '\0';
+//             emit resultReceivedFromShell(resultBuffer);
+//         }
+//         else if (bytesRead < 0) {
+//             break;
+//         }
+//         else{
+//             // bytesRead == 0 means child process has closed PTY for some reasons
+//             perror("PTY closed by child process");
+//             break;
+//         }
+//     }
+//     emit resultReceivedFromShell("Process has exited\n");
+// }
+// -------------------------------------------------------
+
+// ----- new: this is an event-based read loop -----------
+void Ptty::readLoop() {
+    while (!m_stop) {
+        fd_set readFds;
+        FD_ZERO(&readFds);
+        FD_SET(m_masterFd, &readFds);
+
+        // Use select to wait for data on m_masterFd
+        struct timeval timeout;
+        timeout.tv_sec = 0;         // Seconds
+        timeout.tv_usec = 10000;    // Microseconds (10ms)
+
+        int rc = select(m_masterFd + 1, &readFds, nullptr, nullptr, &timeout);
+
+        if (rc > 0 && FD_ISSET(m_masterFd, &readFds)) {
+            std::lock_guard<std::mutex> lock(m_writeMutex);
+            ssize_t bytesRead = read(m_masterFd, resultBuffer, OUTPUT_BUFFER_SIZE - 1);
+
+            if (bytesRead > 0) {
+                resultBuffer[bytesRead] = '\0';
+                emit resultReceivedFromShell(QString::fromStdString(resultBuffer));
+            } 
+            else if (bytesRead == 0) {
+                emit resultReceivedFromShell("Process has exited\n");
+                break;
+            }
+            else {
+                if (errno == EIO) {
+                    // PTY is closed; exit the loop
+                    emit resultReceivedFromShell("PTY has been closed by child process\n");
+                    break;
+                } else if (errno != EAGAIN) {
+                    // Log other errors and break
+                    perror("read");
+                    break;
+                }
+            }
+        } else if (rc == -1) {
+            perror("select");
         }
-        else if (count < 0) {
-            // go inform ScreenController::resultReceivedFromPty()
-            // to close session and hide terminal window
-            break;
-        }
-        else{
-            // CONCERN 1.1
-            // count == 0 means child process has closed PTY for some reasons
-            perror("PTY closed by child process");
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+        // If no data is available (rc == 0), loop continues without busy-waiting
     }
-    emit resultReceivedFromBash("Process has exited\n");
+    emit resultReceivedFromShell("Process has exited\n");
 }
+
 
 void Ptty::start(){
     m_stop = false;
@@ -130,6 +175,7 @@ void Ptty::stop(){
     }
 }
 
+// ----- original
 bool Ptty::spawnChildProcess(){
     m_pid = fork();
     if (m_pid < 0) {
@@ -142,38 +188,65 @@ bool Ptty::spawnChildProcess(){
         return true;
     }
 
-    // setting child process as session leader
-    ::setsid();
-
     // child process, only need slaveFd
-    ::close(m_masterFd);
+    if (::close(m_masterFd) == -1){
+        perror("close(masterFd)");
+        ::_exit(EXIT_FAILURE);
+        return false;
+    }
 
-    // set slave side of pty as stdin, stdout, stderr
-    ::dup2(m_slaveFd, STDIN_FILENO);
-    ::dup2(m_slaveFd, STDOUT_FILENO);
-    ::dup2(m_slaveFd, STDERR_FILENO);
+    // setting child process as session leader
+    if (::setsid() == -1){
+        perror("setsid"); 
+        ::_exit(EXIT_FAILURE);
+        return false;
+    }
 
-    // setting child as the leader of its own group
-    if (ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
+    // setting child as controlling tty of itself 
+    // this allows the shell to handles signal on its own 
+    // without killing the parent too 
+    if (::ioctl(m_slaveFd, TIOCSCTTY, 0) == -1) {
         perror("ioctl(TIOSCTTY)");
         ::_exit(EXIT_FAILURE);
         return false;
     }
-    ::setpgid(0, 0);
 
-    // spawning bash session
-    // char* const argv[] = {(char*)"bash", nullptr}; 
-    // execve(BASH, argv, environ);
-   
-    const char* nutshellPath = "/home/lanphgphm/Projects/terminix/cpp/appnutshell"; 
+    // set slave side of pty as stdin, stdout, stderr
+    if (::dup2(m_slaveFd, STDIN_FILENO) == -1 ||
+        ::dup2(m_slaveFd, STDOUT_FILENO) == -1 ||
+        ::dup2(m_slaveFd, STDERR_FILENO) == -1){
+            perror("dup2"); 
+            ::_exit(EXIT_FAILURE);
+            return false;
+        }
+
+    ::close(m_slaveFd);
+
+    // getting shell path relative to root project dir
+    char* nutshellPath = getShellPath("shell/appnutshell"); 
     char* const argv[] = {(char*)"appnutshell", nullptr}; 
     ::execve(nutshellPath, argv, environ);
 
-    // if got to here --> fail to exec bash
+    // if got to here --> fail to exec shell
     perror("execve");
+    free(nutshellPath);
     ::_exit(EXIT_FAILURE);
     return false;
 }
+
+
+char* Ptty::getShellPath(const char* relativePath) { 
+    size_t totalLen = strlen(PROJECT_ROOT_DIR) + strlen(relativePath) + 2;  // +1 for '/' and +1 for '\0'
+    char* fullPath = (char*)malloc(totalLen);
+    if (!fullPath) {
+        perror("Memory allocation failed\n");
+        return nullptr;
+    }
+
+    snprintf(fullPath, totalLen, "%s/%s", PROJECT_ROOT_DIR, relativePath);
+    return fullPath;  // free this when execve fails
+}
+
 
 void Ptty::sendSignal(int signal){
     if (m_masterFd <= 0){
@@ -181,21 +254,19 @@ void Ptty::sendSignal(int signal){
         return;
     }
 
-    // dynamically get current foreground process
-    pid_t fgPid = tcgetpgrp(m_masterFd);
-    if (fgPid == -1){
+    pid_t shellPgid = tcgetpgrp(m_masterFd);
+    if (shellPgid == -1){
         perror("tcgetpgrp");
         return;
     }
 
-    int sendSignalResult = killpg(fgPid, signal);
+    qDebug() << "Sending signal " << signal << " to process group " << shellPgid ;
+    int sendSignalResult = killpg(shellPgid, signal);
 
     if (sendSignalResult == -1){
-        // TODO 1.7: cannot send signals as root?
-        perror("Failed to send signal");
+        perror("killpg");
     }
     else {
-        qDebug("Signal sent successfully.");
+        qDebug() << "Signal sent successfully.";
     }
 }
-

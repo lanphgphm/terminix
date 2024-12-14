@@ -1,13 +1,11 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.5
-import com.terminix 1.0 // needed to import ScreenController C++ as QML
 
 Rectangle {
     id: screenView
 
-    // 1 controller instance per 1 view instance
-    property ScreenController screenController: ScreenController{}
+    property int defheight: 35
     property bool isEnteringPassword
     signal sessionEnded()
 
@@ -42,22 +40,24 @@ Rectangle {
             }
             else screenView.isEnteringPassword = false;
             // ---------------------------------------------------------------------------
-
             let newContent = listModel.get(0).content + result;
             listModel.setProperty(0, "content", newContent);
 
-            if (!listView.userScrolled)
-                listView.positionViewAtEnd(); // autoscroll down
+            // listView.forceLayout(); 
+            // listView.positionViewAtEnd(); // autoscroll down
         }
 
         function onTerminalSessionEnded() {
             screenView.visible = false;
             sessionEnded();
         }
+    }
 
-        function onShowCommand(command) {
-            listView.currentItem.setCommand(command);
-        }
+    Connections {
+        target: screenView
+        function onSessionEnded(){
+            Qt.quit()
+        } 
     }
 
     ListView {
@@ -67,41 +67,49 @@ Rectangle {
         anchors.fill: parent
         width: parent ? parent.width : 0
         height: parent.height
-        currentIndex: 1
-
-        property bool userScrolled: false
-        onContentYChanged: {
-            if (Math.abs(contentHeight - height - contentY) < 2) {
-                // User is at the bottom, allow autoscroll
-                listView.userScrolled = false;
-            }
-        }
+        keyNavigationEnabled: false
 
         ScrollBar.vertical: ScrollBar {
-            onActiveChanged: {
-                if (active) {
-                    listView.userScrolled = true;
-                }
+            id: ybar
+
+            hoverEnabled: true 
+            active: hovered || pressed
+            orientation: Qt.Vertical
+            policy: ScrollBar.AlwaysOn
+            stepSize: 0.5
+
+            anchors.top: parent.top 
+            anchors.right: parent.right 
+            anchors.bottom: parent.bottom 
+        }
+
+        Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_End) {
+                listView.positionViewAtEnd(); 
+                event.accepted = true; 
             }
         }
 
         delegate: Item {
             width: parent? parent.width : 0
-            height: model.type === "outputText" ? outputArea.height : 30
+            height: model.type === "outputText" ? outputArea.height : defheight
 
             TextEdit {
                 id: outputArea
 
                 readOnly: true
                 visible: model.type === "outputText"
-                width: parent ? parent.width : 0
+                width: screenView.width - 16 // outputArea.contentWidth
                 height: outputArea.contentHeight
+                padding: 8
 
                 font.family: "monospace"
                 font.pointSize: 12
                 color: "#d5d5d5"
 
-                wrapMode: TextEdit.Wrap
+                focus: true 
+                cursorVisible: true
+                wrapMode: TextEdit.WordWrap // NoWrap or WordWrap
                 textFormat: TextEdit.RichText
                 text: model.content
             }
@@ -111,8 +119,9 @@ Rectangle {
 
                 readOnly: false
                 visible: model.type === "inputText"
-                width: parent ? parent.width : 0
-                height: contentHeight > 30 ? contentHeight : 30
+                width: listView.width - 16
+                height: contentHeight > defheight ? contentHeight : defheight
+                padding: 8
 
                 font.family: "monospace"
                 font.pointSize: 13
@@ -122,56 +131,32 @@ Rectangle {
                 echoMode: screenView.isEnteringPassword ? TextInput.Password : TextInput.Normal
                 text: model.content
                 wrapMode: TextInput.Wrap
+                cursorVisible: true
+                autoScroll: true
 
-                // TODO 1.5: Tab-complete input
-                Keys.onPressed: (event) => { //   --------------bitmask----------------
-                    if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_C);
+                Component.onCompleted: {
+                    inputArea.forceActiveFocus(); 
+                }
+
+                Keys.onPressed: (event) => { 
+                    if (event.modifiers & Qt.ControlModifier) {
+                        screenController.handleControlKeyPress(event.key);
                         inputArea.text = "";
                         event.accepted = true;
                     }
-                    else if (event.key === Qt.Key_Up) {
-                        screenController.commandHistoryUp();
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Down) {
-                        screenController.commandHistoryDown();
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
-                        clearScreen();
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Z && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_Z);
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Backslash && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_Backslash);
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_S);
-                        event.accepted = true;
-                    }
-                    else if (event.key === Qt.Key_Q && (event.modifiers & Qt.ControlModifier)) {
-                        screenController.handleControlKeyPress(Qt.Key_Q);
-                        event.accepted = true;
+                    else if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                        // forward raw 
+                        let rawSequence = event.key === Qt.Key_Up ? "\u001B[A" : "\u001B[B";
+                        inputArea.text += rawSequence;
                     }
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         screenController.commandReceivedFromView(text);
-                        if (!screenView.isEnteringPassword) screenController.logCommand(text);
-                        text = "";
+                        inputArea.text = "";
                         if (screenView.isEnteringPassword) screenView.isEnteringPassword = false;
                         event.accepted = true;
                     }
                 }
             }
-
-            function setCommand(command) {
-                inputArea.text = command;
-            }
         }
     }
 }
-
